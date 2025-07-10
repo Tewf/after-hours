@@ -89,3 +89,31 @@ def triangular_Grobner_Basis(polys, var_assign):
 
     # 7) Our triangular basis is [pivot] + tail
     return [pivot] + basis_tail, var_assign
+
+def polynomial_Solver(clauses, num_vars):
+    # convert to polynomials
+
+    polys = sat_to_polynomials(clauses, num_vars)
+    var_assign = {}
+    try:
+        basis,var_assign = triangular_Grobner_Basis(polys, var_assign)
+    except UnsatError:
+        print("UnsatError")
+        return None
+    # reinject and guess
+    while basis:
+        un = [i for i in range(num_vars) if i not in var_assign]
+        if not un:
+            break
+        choix=random.choice(un) 
+        var_assign[choix] = 0
+        try:
+            basis,var_assign = triangular_Grobner_Basis(basis, var_assign)
+        except UnsatError:
+            var_assign[choix] = 1
+            try:
+                basis,var_assign = triangular_Grobner_Basis(basis, var_assign)
+            except UnsatError:
+                print("UnsatError")
+                return None
+    return var_assign
