@@ -90,30 +90,51 @@ def triangular_Grobner_Basis(polys, var_assign):
     # 7) Our triangular basis is [pivot] + tail
     return [pivot] + basis_tail, var_assign
 
-def polynomial_Solver(clauses, num_vars):
-    # convert to polynomials
+import random
 
-    polys = sat_to_polynomials(clauses, num_vars)
-    var_assign = {}
+def polynomial_Solver(polys, num_vars, var_assign=None):
+    """
+    Recursive 3-SAT solver via triangular elimination + eliminate_var branching.
+
+    Args:
+        polys (List[Polynomial]): current system of polynomials over GF(2).
+        num_vars (int): number of Boolean variables (0..num_vars-1).
+        var_assign (dict, optional): partial assignment var→0/1.
+
+    Returns:
+        dict mapping each var→0/1 if SAT, or None if UNSAT.
+    """
+    # initialize on first call
+    if var_assign is None:
+        var_assign = {}
+
+    # 1) Eliminate all forced consequences
     try:
-        basis,var_assign = triangular_Grobner_Basis(polys, var_assign)
+        basis, var_assign = triangular_Grobner_Basis(polys, var_assign)
     except UnsatError:
-        print("UnsatError")
+        # immediate contradiction
         return None
-    # reinject and guess
-    while basis:
-        un = [i for i in range(num_vars) if i not in var_assign]
-        if not un:
-            break
-        choix=random.choice(un) 
-        var_assign[choix] = 0
-        try:
-            basis,var_assign = triangular_Grobner_Basis(basis, var_assign)
-        except UnsatError:
-            var_assign[choix] = 1
-            try:
-                basis,var_assign = triangular_Grobner_Basis(basis, var_assign)
-            except UnsatError:
-                print("UnsatError")
-                return None
-    return var_assign
+
+    # 2) If every variable is assigned, we found a solution
+    if len(var_assign) == num_vars:
+        return var_assign
+
+    # 3) Pick one unassigned variable to branch on
+    unassigned = [v for v in range(num_vars) if v not in var_assign]
+    v = random.choice(unassigned)
+
+    # 4) Try both assignments v=0 and v=1
+    for guess in (0, 1):
+        va_copy = var_assign.copy()
+        va_copy[v] = guess
+
+        # build the reduced system under the guess
+        reduced = [p.eliminate_var(v) for p in basis]
+
+        # recurse
+        sol = polynomial_Solver(reduced, num_vars, va_copy)
+        if sol is not None:
+            return sol
+
+    # 5) Neither branch worked → UNSAT
+    return None
