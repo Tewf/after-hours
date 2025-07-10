@@ -1,10 +1,9 @@
 # Gröbner‐Basis 3-SAT Solver over GF(2)
 
-A from-scratch Python implementation of a 3-SAT decision procedure based on Gröbner‐basis (Hamlil elimination) techniques in the Boolean ring GF(2)\[x₁,…,xₙ]/⟨xᵢ²−xᵢ⟩.
+A from-scratch Python implementation of a 3-SAT decision procedure based on a heuristical Triangular Gröbner‐basis techniques in the Boolean ring GF(2)\[x₁,…,xₙ]/⟨xᵢ²−xᵢ⟩.
 
 <p align="center">
   <img src="https://img.shields.io/badge/language-Python-3.10-%23yellowgreen" alt="Python 3.10">
-  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License">
 </p>
 
 ---
@@ -27,9 +26,6 @@ groebner-sat/
 ├── utils.py             # sat_to_polynomials, generate_3sat, verify_solution
 ├── solver.py            # triangular_Grobner_Basis, local_test, polynomial_Solver
 ├── tests.py             # brute_decide + stress-test harness
-├── examples/
-│   ├── demo_small.py    # solve a tiny 3-SAT instance
-│   └── Substitution.ipynb  # Jupyter notebook illustrating eliminate_var
 └── README.md            # this document
 ```
 
@@ -74,24 +70,26 @@ groebner-sat/
 
 ### 1. Encoding 3-SAT → GF(2) Polynomials
 
-Each clause $(ℓ₁∨ℓ₂∨ℓ₃)$ becomes
+Each clause $(ℓ₁∨ℓ₂∨-ℓ₃)$ becomes
 
 $$
-  (1+x_i)\,(1+x_j)\,x_k = 0
+  (1+x_1)\,(1+x_2)\,x_3 = 0
 $$
 
 in GF(2), with $x_i=1$ for a positive literal and omitted for a negation.
 
-### 2. Triangular Elimination & Local Test
+### 2. Triangular Elimination & Local Test  
+- **`triangular_Grobner_Basis(polys, var_assign)`**  
+  1. Selects the “largest” polynomial \(p\).  
+  2. Extracts its leading monomial \(M\) and remainder \(L(x)\) so that \(p(x)=M+L(x)=0\).  
+  3. **Records this monomial→polynomial reduction** \((M,L)\).  
+  4. Substitutes \(M→L\) into every other polynomial via `inject_monomial`, propagating that “solved” relation globally.  
+  5. Applies `local_test()` to force any single-variable assignments.  
+- **`local_test(poly, var_assign)`**  
+  Randomly picks a variable in `poly`, tries setting it to 1 then 0; if that yields a contradiction \(1=0\), forces the opposite assignment and recurses.
 
-* **`triangular_Grobner_Basis(polys, var_assign)`**
-  Repeatedly selects the “largest” polynomial, applies forced single-variable assignments via `local_test()`, and records monomial‐to‐polynomial reductions.
-* **`local_test(poly, var_assign)`**
-  Randomly picks a variable in `poly`, tries setting it to 1 then 0; if either yields a contradiction $1=0$, forces the opposite and recurses.
-
-### 3. Recursive Solver with Eliminate-Var
-
-Once no more forced consequences remain, if not all variables are assigned, `polynomial_Solver` picks a free variable, **eliminates** it from the basis via `p.eliminate_var(v)`, and recurses.
+### 3. Recursive Solver with Eliminate-Var  
+Once no more forced consequences remain, if not all variables are assigned, `polynomial_Solver` picks a free variable, **eliminates** it from the current basis (`p.eliminate_var(v)`), and recurses.
 
 ---
 
