@@ -1,4 +1,6 @@
 import random
+from polynomial import Polynomial
+
 # ---------- 3-SAT → Polynomials ----------
 def sat_to_polynomials(clauses, num_vars):
     zero = (0,) * num_vars

@@ -14,5 +14,11 @@ This repository contains a collection of visualizations and animations created i
 - **Interactive Learning**: Enable dynamic representations of data and mathematical concepts for more engaging learning experiences.
 - **Accessible Documentation**: Offer clear explanations and code comments to make the repository useful for both beginners and advanced users interested in Blender and Python.
 
+### **Demos**
+
+See the [sorting_algorithms/](sorting_algorithms/) folder for recorded animations:
+- [Bubble Sort screencast](sorting_algorithms/Screencast_bubble_sort.webm) (.webm)
+- [Merge Sort animation](sorting_algorithms/merge_sort_animation.mkv) (.mkv)
+
 ---
 

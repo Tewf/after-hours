@@ -21,7 +21,7 @@ A from-scratch Python implementation of a 3-SAT decision procedure based on a he
 ## 📂 Repository Layout
 
 ```
-groebner-sat/
+Groebner_Basis_SAT_Solver/
 ├── polynomial.py        # GF(2) Polynomial class + monomial operations
 ├── utils.py             # sat_to_polynomials, generate_3sat, verify_solution
 ├── solver.py            # triangular_Grobner_Basis, local_test, polynomial_Solver
