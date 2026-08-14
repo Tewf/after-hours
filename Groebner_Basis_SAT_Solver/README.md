@@ -24,7 +24,11 @@ Groebner_Basis_SAT_Solver/
 ├── polynomial.py        # GF(2) Polynomial class + monomial operations
 ├── utils.py             # sat_to_polynomials, generate_3sat, verify_solution
 ├── solver.py            # triangular_Grobner_Basis, local_test, polynomial_Solver
-├── tests.py             # brute_decide + stress-test harness
+├── linear_algebra.py    # GF(2) row echelon on the monomial-linearised system
+│                        #   (sound, but measured useless -- see below)
+├── test_bruteforce.py   # verification vs exhaustive search, no dependencies
+├── tests.py             # cross-check vs PySAT's Minisat22
+├── docs/                # the superseded 2023 write-up, and why it is wrong
 └── README.md            # this document
 ```
 
@@ -52,8 +56,12 @@ Groebner_Basis_SAT_Solver/
 2. **Run the test suite**
 
    ```bash
-   python tests.py
+   python test_bruteforce.py   # no dependencies: checks against exhaustive search
+   python tests.py             # cross-check against MiniSat (needs python-sat)
    ```
+
+   `test_bruteforce.py` is the stricter of the two: for a SAT verdict it
+   validates the returned assignment, not just the verdict.
 
 ---
 
