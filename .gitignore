@@ -24,3 +24,7 @@ Thumbs.db
 
 # Blender
 *.blend1
+
+# Learning material and build output, kept local only:
+# copyrighted books and compiled binaries do not belong in a public repo.
+C++/
