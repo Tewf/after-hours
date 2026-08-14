@@ -1,3 +1,8 @@
+import random
+
+from polynomial import Polynomial, UnsatError
+
+
 def local_test(poly, var_assign):
     """
     Try to force exactly one variable in `poly` under the current var_assign.
@@ -90,11 +95,16 @@ def triangular_Grobner_Basis(polys, var_assign):
     # 7) Our triangular basis is [pivot] + tail
     return [pivot] + basis_tail, var_assign
 
-import random
 
 def polynomial_Solver(polys, num_vars, var_assign=None):
     """
-    Recursive 3-SAT solver via triangular elimination + eliminate_var branching.
+    Recursive 3-SAT solver: triangular elimination as propagation, then branching.
+
+    The elimination is used for what it is good at -- forcing variables and
+    detecting 1=0 -- while the search branches on the *system*, never on the
+    returned basis.  The basis is only the list of pivots that were popped
+    during elimination, so recursing on it drops every constraint that was
+    rewritten into another polynomial along the way.
 
     Args:
         polys (List[Polynomial]): current system of polynomials over GF(2).
@@ -108,30 +118,35 @@ def polynomial_Solver(polys, num_vars, var_assign=None):
     if var_assign is None:
         var_assign = {}
 
-    # 1) Eliminate all forced consequences
+    # 1) Propagate forced consequences. Copies, because triangular_Grobner_Basis
+    #    mutates both arguments and sibling branches must not see each other's.
     try:
-        basis, var_assign = triangular_Grobner_Basis(polys, var_assign)
+        _basis, var_assign = triangular_Grobner_Basis(list(polys), dict(var_assign))
     except UnsatError:
-        # immediate contradiction
         return None
 
-    # 2) If every variable is assigned, we found a solution
-    if len(var_assign) == num_vars:
-        return var_assign
+    # 2) Apply everything propagation learned, and re-check for a contradiction
+    polys = [p.substitute(var_assign) for p in polys]
+    if any(p.is_constant_one() for p in polys):
+        return None
+    polys = [p for p in polys if not p.is_zero()]
 
-    # 3) Pick one unassigned variable to branch on
+    # 3) No equations left ⇒ every clause is satisfied. Variables the search
+    #    never had to touch are free, so give them an arbitrary value.
+    if not polys:
+        return {v: var_assign.get(v, 0) for v in range(num_vars)}
+
+    # 4) Branch on an unassigned variable
     unassigned = [v for v in range(num_vars) if v not in var_assign]
+    if not unassigned:
+        # equations remain but nothing is left to assign ⇒ unsatisfiable
+        return None
     v = random.choice(unassigned)
 
-    # 4) Try both assignments v=0 and v=1
     for guess in (0, 1):
-        va_copy = var_assign.copy()
+        va_copy = dict(var_assign)
         va_copy[v] = guess
-
-        # build the reduced system under the guess
-        reduced = [p.eliminate_var(v) for p in basis]
-
-        # recurse
+        reduced = [p.substitute_var(v, guess) for p in polys]
         sol = polynomial_Solver(reduced, num_vars, va_copy)
         if sol is not None:
             return sol
