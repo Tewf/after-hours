@@ -1,23 +1,18 @@
 # Gröbner‐Basis 3-SAT Solver over GF(2)
 
-A from-scratch Python implementation of a 3-SAT decision procedure based on a heuristical Triangular Gröbner‐basis techniques in the Boolean ring GF(2)\[x₁,…,xₙ]/⟨xᵢ²−xᵢ⟩.
+A 3-SAT decision procedure built from scratch in Python. Clauses become
+polynomials in the Boolean ring GF(2)[x₁,…,xₙ]/⟨xᵢ²−xᵢ⟩, where the satisfying
+assignments are exactly the common zeros; triangular Gröbner-style elimination
+propagates, and branching completes the search.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/language-Python-3.10-%23yellowgreen" alt="Python 3.10">
-</p>
-
----
-
-## 🚀 Features
+## What it does
 
 * **Polynomial encoding** of 3-SAT clauses as GF(2) ideals with idempotence xᵢ² = xᵢ
 * **Triangular Gröbner‐like basis** extraction via monomial elimination + local one-variable forcing
 * **Recursive backtracking** interleaving elimination with branching on free variables
 * **Solver wrapper** for stress-testing against a reference SAT solver (PySAT’s Minisat22)
 
----
-
-## 📂 Repository Layout
+## Layout
 
 ```
 Groebner_Basis_SAT_Solver/
@@ -32,9 +27,7 @@ Groebner_Basis_SAT_Solver/
 └── README.md            # this document
 ```
 
----
-
-## 🎯 Quickstart
+## Quickstart
 
 1. **Solve a random 3-SAT**
 
@@ -63,9 +56,7 @@ Groebner_Basis_SAT_Solver/
    `test_bruteforce.py` is the stricter of the two: for a SAT verdict it
    validates the returned assignment, not just the verdict.
 
----
-
-## 📖 Design Overview
+## How it works
 
 ### 1. Encoding 3-SAT → GF(2) Polynomials
 
@@ -94,8 +85,7 @@ Once no more forced consequences remain, if not all variables are assigned,
 returned basis: that basis holds only the pivots popped during elimination, so
 every constraint rewritten into another polynomial along the way would be lost.
 
----
-## 📊 What it actually does
+## What the numbers say
 
 Numbers below are measured, not estimated. Ground truth for $n\le14$ is
 exhaustive enumeration of all $2^n$ assignments, which checks the returned
@@ -131,14 +121,14 @@ exhaustive enumeration of all $2^n$ assignments, which checks the returned
   * `polynomial_Solver` is worst-case **exponential** in $n$, because arbitrary
     3-SAT is NP-complete. No amount of algebraic preprocessing changes that.
 
----
+## Where it could go next
 
-## 🤔 Suggestions & Future Work
-
-* **Make the elimination earn its place.** Right now it is nearly inert. Adding
-  Gaussian elimination over GF(2) on the monomial-linearised system would catch
-  contradictions arising from an XOR of several rows, which the current
-  per-polynomial $1=0$ check cannot see.
+* **Make the elimination earn its place.** Right now it is nearly inert.
+  Row-reducing the whole system over GF(2) was the obvious candidate — it catches
+  contradictions needing several equations XORed together, which the
+  per-polynomial $1=0$ check cannot see. It is implemented in
+  `linear_algebra.py` and it does not help: across 258 unsatisfiable instances it
+  found exactly as many as the cheap check, none. Something stronger is needed.
 * **Stronger propagation**: “monomial forced to 1 ⇒ every variable in it is 1”
   is deterministic and strictly stronger than the current single-random-variable
   forcing in `local_test`.
@@ -146,4 +136,3 @@ exhaustive enumeration of all $2^n$ assignments, which checks the returned
 * **Benchmark at the phase transition** ($m/n \approx 4.26$) rather than at 3.0.
 
 ---
-

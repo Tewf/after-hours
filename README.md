@@ -1,4 +1,4 @@
-# Lab
+# Side Projects
 
 Work I do outside coursework, in reinforcement learning, computer algebra,
 numerical linear algebra and applied mathematical modelling. Each directory is
