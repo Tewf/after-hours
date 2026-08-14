@@ -1,6 +1,6 @@
-# Computational Experiments
+# Lab
 
-Independent work outside coursework, in reinforcement learning, computer algebra,
+Work I do outside coursework, in reinforcement learning, computer algebra,
 numerical linear algebra and applied mathematical modelling. Each directory is
 self-contained, with its own README and requirements.
 
