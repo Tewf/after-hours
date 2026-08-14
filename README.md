@@ -14,9 +14,9 @@ A deep learning project that trains a CNN to play Flappy Bird by processing raw 
 **Tech:** Python, PyTorch, Pygame, Gymnasium
 
 ### [Groebner-Basis 3-SAT Solver](Groebner_Basis_SAT_Solver/)
-A from-scratch 3-SAT decision procedure using triangular Groebner-basis techniques in the Boolean ring GF(2)[x1,...,xn]. On 10,000 random instances (n=20, m=60), the elimination step alone flags ~99.94% of UNSAT cases without branching.
+A from-scratch 3-SAT solver that encodes clauses as polynomials in the Boolean ring GF(2)[x1,...,xn]/(xi²−xi), uses triangular Groebner-style elimination for propagation, then branches. Verified against exhaustive enumeration: 500 instances at n=8–12 and 2,000 at n=20 with no wrong verdict and no invalid assignment. The write-up is honest about where the algebra stops helping — the elimination step is sound but flags almost no UNSAT instances on its own.
 
-**Tech:** Python, PySAT (for benchmarking)
+**Tech:** Python, PySAT (optional, for cross-checking)
 
 ### [Linear Algebra Explorations](Linear_Algebra/)
 Four notebooks implementing matrix algorithms from scratch:

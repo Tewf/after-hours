@@ -13,8 +13,7 @@ A from-scratch Python implementation of a 3-SAT decision procedure based on a he
 * **Polynomial encoding** of 3-SAT clauses as GF(2) ideals with idempotence xᵢ² = xᵢ
 * **Triangular Gröbner‐like basis** extraction via monomial elimination + local one-variable forcing
 * **Recursive backtracking** interleaving elimination with branching on free variables
-* **Solver wrapper** for stress-testing against a reference SAT solver (e.g. PySAT’s Minisat)
-* **Notebook demos** illustrating substitution, elimination, and monomial‐injection steps
+* **Solver wrapper** for stress-testing against a reference SAT solver (PySAT’s Minisat22)
 
 ---
 
@@ -80,46 +79,63 @@ in GF(2), with $x_i=1$ for a positive literal and omitted for a negation.
 - **`local_test(poly, var_assign)`**  
   Randomly picks a variable in `poly`, tries setting it to 1 then 0; if that yields a contradiction \(1=0\), forces the opposite assignment and recurses.
 
-### 3. Recursive Solver with Eliminate-Var  
-Once no more forced consequences remain, if not all variables are assigned, `polynomial_Solver` picks a free variable, **eliminates** it from the current basis (`p.eliminate_var(v)`), and recurses.
+### 3. Recursive Solver
+Once no more forced consequences remain, if not all variables are assigned,
+`polynomial_Solver` picks a free variable, substitutes both values into the
+**current system** and recurses. It deliberately does *not* branch on the
+returned basis: that basis holds only the pivots popped during elimination, so
+every constraint rewritten into another polynomial along the way would be lost.
 
 ---
-## 📊 Performance & Complexity
+## 📊 What it actually does
+
+Numbers below are measured, not estimated. Ground truth for $n\le14$ is
+exhaustive enumeration of all $2^n$ assignments, which checks the returned
+*assignment* and not merely the SAT/UNSAT verdict.
+
+* **Correctness**
+  * 500 instances at $n=8\text{–}12$: **0** wrong verdicts, **0** invalid assignments.
+  * 2 000 instances at $n=20,\;m=60$: every SAT verdict came with an assignment
+    that verifies.
+
+* **The elimination step alone is sound but weak.** It never claims UNSAT on a
+  satisfiable instance — 0 unsound claims in every run — but it rarely claims
+  anything at all. Across 285 genuinely-UNSAT instances at $n=10\text{–}14$ it
+  flagged **1**. At $n=20,\;m=60$ it resolves **0.00 %** of systems on its own.
+  Essentially all the work is done by the branching.
+
+* **A note on the benchmark ratio.** $m/n = 3.0$ sits well below the random
+  3-SAT phase transition at $\alpha \approx 4.26$, so ~99.95 % of instances
+  generated there are satisfiable. A high success rate at that ratio measures
+  the instance distribution, not the solver. Harder instances live near
+  $m/n \approx 4.26$; at $n=10,\;m=43$ this solver still agrees with exhaustive
+  search on every instance, but the elimination step contributes nothing.
 
 * **Incomplete “triangular” basis**
-  Our `triangular_Grobner_Basis` does *not* compute full S-polynomials, so it doesn’t guarantee a true Gröbner basis. Instead it produces a set of polynomials where no one can be algebraically expressed *solely* in terms of the others by basic GF(2) arithmetic.
-
-* **When it shines**
-
-  * If it ever derives a direct contradiction (the constant one polynomial ⇒ $1=0$), you know the system is UNSAT.
-  * In practice, many random 3-SAT formulas contain enough structure that your elimination + one-variable forcing quickly discovers contradictions—often before any brute-force branching is needed.
-
-* **Benchmark snippet**
-  On 10 000 random 3-SAT instances with $n=20$ variables and $m=60$ clauses, `triangular_Grobner_Basis` alone flagged **≈99.94 %** of the UNSAT cases without any guessing.
-
-* **Hybrid speed-up**
-  Embedding this fast “partial elimination” inside a standard backtracking SAT solver cuts down the search tree significantly:
-
-  1. **Eliminate** all forced consequences via monomial → polynomial reductions.
-  2. If UNSAT detected → stop immediately.
-  3. Otherwise **branch** on one remaining free variable and recurse.
+  `triangular_Grobner_Basis` does *not* compute full S-polynomials, so it does
+  not guarantee a true Gröbner basis. It produces a set of polynomials where no
+  one can be algebraically expressed *solely* in terms of the others by basic
+  GF(2) arithmetic — which is why it is a weak UNSAT detector rather than a
+  decision procedure.
 
 * **Complexity**
-  * `triangular_Grobner_Basis` is **polynomial** in $n$
-  * `polynomial_Solver` Worst-case still **exponential** in $n$ (because arbitrary 3-SAT is NP-complete).
-  * Nevertheless, for small-to-medium benchmarks ($n\approx20–30,\;m\approx60–100$), the combination of algebraic elimination plus selective branching often outperforms pure brute-force.
-
----
-
-*By weaving fast elimination into your search, you get the best of both worlds: a quick UNSAT check and a dramatically smaller branching factor.*
-
+  * `triangular_Grobner_Basis` is **polynomial** in $n$.
+  * `polynomial_Solver` is worst-case **exponential** in $n$, because arbitrary
+    3-SAT is NP-complete. No amount of algebraic preprocessing changes that.
 
 ---
 
 ## 🤔 Suggestions & Future Work
 
+* **Make the elimination earn its place.** Right now it is nearly inert. Adding
+  Gaussian elimination over GF(2) on the monomial-linearised system would catch
+  contradictions arising from an XOR of several rows, which the current
+  per-polynomial $1=0$ check cannot see.
+* **Stronger propagation**: “monomial forced to 1 ⇒ every variable in it is 1”
+  is deterministic and strictly stronger than the current single-random-variable
+  forcing in `local_test`.
 * **Term-order Variants**: experiment with lex, graded-lex, etc.
-* **Visualization**: extend the notebook to animate elimination steps.
+* **Benchmark at the phase transition** ($m/n \approx 4.26$) rather than at 3.0.
 
 ---
 

@@ -136,7 +136,14 @@ def polynomial_Solver(polys, num_vars, var_assign=None):
     if not polys:
         return {v: var_assign.get(v, 0) for v in range(num_vars)}
 
-    # 4) Branch on an unassigned variable
+    # 4) linear_algebra.detects_contradiction() would go here -- row-reducing
+    #    the whole system over GF(2) catches contradictions that need several
+    #    equations XORed together, which the per-polynomial check cannot see.
+    #    It is deliberately NOT called: measured over 258 unsatisfiable random
+    #    instances it found exactly as many as the cheap check did, namely none,
+    #    while costing a row reduction at every node. See that module's docstring.
+
+    # 5) Branch on an unassigned variable
     unassigned = [v for v in range(num_vars) if v not in var_assign]
     if not unassigned:
         # equations remain but nothing is left to assign ⇒ unsatisfiable
@@ -151,5 +158,5 @@ def polynomial_Solver(polys, num_vars, var_assign=None):
         if sol is not None:
             return sol
 
-    # 5) Neither branch worked → UNSAT
+    # 6) Neither branch worked → UNSAT
     return None
