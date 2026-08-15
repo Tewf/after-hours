@@ -92,9 +92,11 @@ exhaustive enumeration of all $2^n$ assignments, which checks the returned
 *assignment* and not merely the SAT/UNSAT verdict.
 
 * **Correctness**
-  * 500 instances at $n=8\text{–}12$: **0** wrong verdicts, **0** invalid assignments.
-  * 2 000 instances at $n=20,\;m=60$: every SAT verdict came with an assignment
-    that verifies.
+  * 500 instances at $n=8\text{–}12$: **0** wrong verdicts, **0** invalid
+    assignments. This is what `test_bruteforce.py` runs, in about 28 s.
+  * 20 000 instances at $n=20,\;m=60$: every SAT verdict came with an assignment
+    that verifies. This is what `tests.py` runs, cross-checked against PySAT
+    rather than against exhaustive search, which is infeasible at $n=20$.
 
 * **The elimination step alone is sound but weak.** It never claims UNSAT on a
   satisfiable instance — 0 unsound claims in every run — but it rarely claims

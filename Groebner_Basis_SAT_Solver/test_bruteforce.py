@@ -80,7 +80,8 @@ def test_against_brute_force(num_tests=150, num_vars=10, num_clauses=45, seed=0)
 if __name__ == "__main__":
     test_worked_example()
     test_trivially_unsat()
-    test_against_brute_force(150, 8, 30, seed=1)
-    test_against_brute_force(150, 10, 45, seed=2)
-    test_against_brute_force(80, 12, 51, seed=3)
+    # 500 instances in total, which is the number this repository claims.
+    test_against_brute_force(200, 8, 30, seed=1)
+    test_against_brute_force(200, 10, 45, seed=2)
+    test_against_brute_force(100, 12, 51, seed=3)
     print("\nAll checks passed.")
