@@ -28,6 +28,14 @@ def parse_args():
     parser.add_argument("--record", default=None,
                         help="write the best episode to this .webp or .gif")
     parser.add_argument("--record-fps", type=int, default=24)
+    parser.add_argument("--record-width", type=int, default=None,
+                        help="downscale the recording, which is 600 px wide otherwise")
+    parser.add_argument("--record-max-frames", type=int, default=None,
+                        help="truncate the recording; a good agent plays for "
+                             "thousands of frames and the file grows with it")
+    parser.add_argument("--record-quality", type=int, default=60,
+                        help="WebP quality; the game background is photographic "
+                             "and does not compress like flat artwork does")
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     return parser.parse_args()
 
@@ -86,8 +94,17 @@ def main():
 
     if args.record and best_frames:
         import imageio.v3 as iio
+        if args.record_max_frames:
+            best_frames = best_frames[:args.record_max_frames]
+        if args.record_width:
+            import cv2
+            height, width = best_frames[0].shape[:2]
+            size = (args.record_width, round(height * args.record_width / width))
+            best_frames = [cv2.resize(f, size, interpolation=cv2.INTER_AREA)
+                           for f in best_frames]
         iio.imwrite(args.record, np.stack(best_frames),
-                    duration=int(1000 / args.record_fps), loop=0)
+                    duration=int(1000 / args.record_fps), loop=0,
+                    quality=args.record_quality, method=6)
         print(f"wrote {args.record}: best episode, {best_score} pipes, "
               f"{len(best_frames)} frames")
 
