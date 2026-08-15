@@ -1,5 +1,7 @@
 # Side Projects
 
+> [Lire en français](README.fr.md)
+
 Things I build in my own time, in machine learning, computer algebra and applied
 mathematics. Each folder stands alone, with its own README and requirements.
 
