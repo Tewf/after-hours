@@ -6,6 +6,12 @@
 
 > [Lire en français](README.fr.md)
 
+> [!TIP]
+> **Everything here is browsable as a site:
+> [tewf.github.io/after-hours](https://tewf.github.io/after-hours/)**
+> Every project on one page, with the animations and charts at full size, and
+> the tax report readable in the browser rather than downloadable as a PDF.
+
 What I build when I am bored. Nobody assigned any of it and none of it is
 coursework: it is what I do with a free evening, in machine learning, computer
 algebra and applied mathematics.

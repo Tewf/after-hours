@@ -6,6 +6,12 @@
 
 > [Read in English](README.md)
 
+> [!TIP]
+> **Tout est consultable comme un site :
+> [tewf.github.io/after-hours](https://tewf.github.io/after-hours/index.fr.html)**
+> Chaque projet sur une seule page, animations et graphiques en pleine taille,
+> et le rapport fiscal lisible dans le navigateur plutôt qu'en PDF à télécharger.
+
 Ce que je construis quand je m'ennuie. Personne ne me l'a demandé et rien ici
 n'est un devoir : c'est ce que je fais d'une soirée libre, en apprentissage
 automatique, calcul formel et mathématiques appliquées.
