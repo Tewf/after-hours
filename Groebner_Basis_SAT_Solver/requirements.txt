@@ -1,1 +1,5 @@
-python-sat
+# Only tests.py needs this, for the cross-check against MiniSat.
+# test_bruteforce.py is stdlib-only and needs nothing installed at all.
+# Pinned to the version the cross-check was last run against; upstream publishes
+# 1.9 only as a dev release at the time of writing.
+python-sat==1.9.dev14
