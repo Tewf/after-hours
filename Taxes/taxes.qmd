@@ -205,10 +205,10 @@ y_scaled = taux_effectifs[revenus_bruts > 0]
 # Définition des zones d'ajustement (en Brut x10k€)
 # Ces seuils sont approximés à partir du barème net
 zones = {
-    "0–17k€":    (0, 1.7),
-    "17–40k€":   (1.7, 4.0),
-    "40–115k€":  (4.0, 11.5),
-    "115–247k€": (11.5, 24.7),
+    "0-17k€":    (0, 1.7),
+    "17-40k€":   (1.7, 4.0),
+    "40-115k€":  (4.0, 11.5),
+    "115-247k€": (11.5, 24.7),
     ">247k€":    (24.7, np.inf)
 }
 
@@ -373,7 +373,7 @@ Cette analyse confirme la nature **fortement concave** de l'impôt sur le revenu
 ## Limites de l'ajustement par zones
 
 Trois des cinq zones ne produisent pas de seuil exploitable et sont marquées
-`NaN` dans le tableau ci-dessus. La zone `0–17k€` est presque linéaire sur son
+`NaN` dans le tableau ci-dessus. La zone `0-17k€` est presque linéaire sur son
 intervalle, donc l'ajustement exponentiel y dégénère (coefficients de l'ordre de
 $10^9$) et sa solution tombe très loin de la plage. La zone `>247k€` ne renvoie
 que des solutions négatives. Seuls le modèle global et deux zones intermédiaires

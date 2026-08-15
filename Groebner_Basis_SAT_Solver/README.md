@@ -92,7 +92,7 @@ exhaustive enumeration of all $2^n$ assignments, which checks the returned
 *assignment* and not merely the SAT/UNSAT verdict.
 
 * **Correctness**
-  * 500 instances at $n=8\text{–}12$: **0** wrong verdicts, **0** invalid
+  * 500 instances at $8 \leq n \leq 12$: **0** wrong verdicts, **0** invalid
     assignments. This is what `test_bruteforce.py` runs, in about 28 s.
   * 20 000 instances at $n=20,\;m=60$: every SAT verdict came with an assignment
     that verifies. This is what `tests.py` runs, cross-checked against PySAT
@@ -100,7 +100,7 @@ exhaustive enumeration of all $2^n$ assignments, which checks the returned
 
 * **The elimination step alone is sound but weak.** It never claims UNSAT on a
   satisfiable instance (0 unsound claims in every run), but it rarely claims
-  anything at all. Across 285 genuinely-UNSAT instances at $n=10\text{–}14$ it
+  anything at all. Across 285 genuinely-UNSAT instances at $10 \leq n \leq 14$ it
   flagged **1**. At $n=20,\;m=60$ it resolves **0.00 %** of systems on its own.
   Essentially all the work is done by the branching.
 
