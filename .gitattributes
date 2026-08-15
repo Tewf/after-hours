@@ -1,0 +1,27 @@
+# What the language bar should count.
+#
+# Left alone it read 85% HTML and 4% Python for a repository whose code is
+# Python. The bar weighs bytes, and the biggest files here are not the ones
+# anyone wrote:
+#
+#   Taxes/taxes.html      2.2 MB   Quarto output, figures inlined as base64
+#   Linear_Algebra/*.ipynb 277 KB  of which 2.7% is code and 90.7% is stored
+#                                  figure output, also base64
+#
+# Excluding them is not hiding anything: every file is still in the repository
+# and still rendered on the project page. It stops the bar reporting the size
+# of embedded PNGs as if it were a language.
+
+# Quarto output, generated from taxes.qmd and committed only so Pages can serve
+# it. Excluded from the stats, and collapsed in diffs where it is unreadable.
+Taxes/taxes.html linguist-generated=true
+
+# The project site. Hand-written, but it is the site, not the projects.
+index.html      linguist-documentation=true
+index.fr.html   linguist-documentation=true
+site.css        linguist-documentation=true
+
+# The notebooks narrate the modules and plot their results; the algorithms
+# themselves are in the .py files next to them. Counting a notebook's embedded
+# figures as 72% of the repository would say the opposite.
+Linear_Algebra/*.ipynb linguist-documentation=true
