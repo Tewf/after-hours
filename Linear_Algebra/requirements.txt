@@ -1,1 +1,8 @@
-numpy
+# Pinned to the versions these were verified against.
+# The modules and the tests need only numpy; the rest is for the notebooks.
+numpy==2.4.6
+matplotlib==3.11.1
+nbformat==5.11.0
+nbclient==0.11.0
+jupyter-core==5.9.1
+ipykernel==7.3.0
