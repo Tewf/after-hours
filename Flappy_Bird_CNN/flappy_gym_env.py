@@ -15,7 +15,6 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 from gymnasium.wrappers import (
-    GrayscaleObservation,
     ResizeObservation,
     FrameStackObservation,
     MaxAndSkipObservation,
@@ -85,20 +84,47 @@ class FlappyBirdEnv(gym.Env):
         self._generator = None
 
 
-def make_env(render_mode=None, headless=True, seed=None, frame_skip=FRAME_SKIP):
-    """The environment as the agent sees it: 4 stacked 84x84 greyscale frames.
+class BlueChannelObservation(gym.ObservationWrapper):
+    """Reduce to one channel by taking blue, not by converting to luminance.
 
-    Resize before greyscale, not after: greyscaling is a weighted sum in numpy,
-    so doing it at 600x499 costs 3.5 ms a step against 0.1 ms at 84x84. The
-    resulting frames are indistinguishable.
+    Measured on the sprites against the sky background, in levels out of 255:
+
+        projection            bird vs sky   pipe vs sky
+        luminance greyscale            22            64
+        blue channel                  181           247
+
+    The bird is yellow on light blue and the two are nearly equiluminant, so the
+    standard greyscale conversion very nearly erases the one object whose
+    position the agent most needs to know. Its own body came through at 22
+    levels while the obstacles came through at 64.
+
+    This is a fixed, hand-chosen projection in the same sense greyscaling is.
+    The agent still receives nothing but rendered pixels.
+    """
+
+    def __init__(self, env):
+        super().__init__(env)
+        height, width, _ = env.observation_space.shape
+        self.observation_space = spaces.Box(
+            low=0, high=255, shape=(height, width), dtype=np.uint8)
+
+    def observation(self, observation):
+        return observation[:, :, 2]
+
+
+def make_env(render_mode=None, headless=True, seed=None, frame_skip=FRAME_SKIP):
+    """The environment as the agent sees it: 4 stacked 84x84 single-channel frames.
+
+    The channel is taken before the resize, so the resize works on one plane
+    rather than three.
 
     frame_skip holds each action for several game frames and sums the reward
     over them. The game runs at 32 fps, so without it the agent makes about 35
     decisions before its first pipe and has to assign credit across all of them.
     """
     env = FlappyBirdEnv(render_mode=render_mode, headless=headless)
+    env = BlueChannelObservation(env)
     env = ResizeObservation(env, (FRAME_SIZE, FRAME_SIZE))
-    env = GrayscaleObservation(env, keep_dim=False)
     if frame_skip > 1:
         env = MaxAndSkipObservation(env, skip=frame_skip)
     env = FrameStackObservation(env, STACK)
