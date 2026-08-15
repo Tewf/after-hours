@@ -99,7 +99,7 @@ exhaustive enumeration of all $2^n$ assignments, which checks the returned
     rather than against exhaustive search, which is infeasible at $n=20$.
 
 * **The elimination step alone is sound but weak.** It never claims UNSAT on a
-  satisfiable instance — 0 unsound claims in every run — but it rarely claims
+  satisfiable instance (0 unsound claims in every run), but it rarely claims
   anything at all. Across 285 genuinely-UNSAT instances at $n=10\text{–}14$ it
   flagged **1**. At $n=20,\;m=60$ it resolves **0.00 %** of systems on its own.
   Essentially all the work is done by the branching.
@@ -115,7 +115,7 @@ exhaustive enumeration of all $2^n$ assignments, which checks the returned
   `triangular_Grobner_Basis` does *not* compute full S-polynomials, so it does
   not guarantee a true Gröbner basis. It produces a set of polynomials where no
   one can be algebraically expressed *solely* in terms of the others by basic
-  GF(2) arithmetic — which is why it is a weak UNSAT detector rather than a
+  GF(2) arithmetic, which is why it is a weak UNSAT detector rather than a
   decision procedure.
 
 * **Complexity**
@@ -126,7 +126,7 @@ exhaustive enumeration of all $2^n$ assignments, which checks the returned
 ## Where it could go next
 
 * **Make the elimination earn its place.** Right now it is nearly inert.
-  Row-reducing the whole system over GF(2) was the obvious candidate — it catches
+  Row-reducing the whole system over GF(2) was the obvious candidate: it catches
   contradictions needing several equations XORed together, which the
   per-polynomial $1=0$ check cannot see. It is implemented in
   `linear_algebra.py` and it does not help: across 258 unsatisfiable instances it

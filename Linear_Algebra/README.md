@@ -4,6 +4,8 @@ Four classical problems solved the long way round, to see what the shortcut is
 hiding. NumPy appears throughout, but only as the oracle each result is checked
 against, never as the implementation.
 
+![Hand-written transforms against numpy.fft](fft_accuracy.png)
+
 ```sh
 python test_linear_algebra.py     # 11 checks, under a second
 ```
