@@ -6,8 +6,6 @@
 
 > [Lire en français](README.fr.md)
 
-![Flappy Bird from pixels, sorting in Blender, a 3-SAT instance over GF(2), hand-written matrix algorithms, and the French income tax](banner.png)
-
 What I build when I am bored. Nobody assigned any of it and none of it is
 coursework: it is what I do with a free evening, in machine learning, computer
 algebra and applied mathematics.
@@ -17,13 +15,13 @@ number below is produced by code in this repository, and
 [CI](https://github.com/Tewf/after-hours/actions/workflows/ci.yml) reruns the
 checks on every push.
 
-| | What it is | What it does |
-|---|---|---|
-| **[Flappy Bird from raw pixels](Flappy_Bird_CNN/)** | A DQN and a REINFORCE agent that see nothing but the rendered frame. No position, no velocity, no pipe coordinates | **12.21 pipes** per episode over 100 greedy episodes, best 61, trained in **23 minutes** on one RTX 4060 |
-| **[3-SAT solver over GF(2)](Groebner_Basis_SAT_Solver/)** | Clauses become polynomials, triangular Gröbner-style elimination propagates, branching finishes | **0 wrong verdicts** on 500 instances checked against exhaustive search, and it says plainly which half of it does the work |
-| **[Sorting algorithms in 3D](Blender_Python_Scripts/)** | Bubble and merge sort keyframed and rendered through Blender's Python API | **1407 and 801 frames** at 1080p24, rendered headless in 4 and 2 minutes |
-| **[Matrix algorithms from scratch](Linear_Algebra/)** | An FFT, a determinant, an exact inverse and a trace, each written out rather than called | **11 checks** against numpy, matching to 1e-13. NumPy is the oracle, never the implementation |
-| **[The French income tax, modelled](Taxes/)** | Exponential fits per bracket, then the Lambert W function to find where the effective rate stops accelerating | The tipping point is **59 800 EUR** gross a year |
+| | |
+|---|---|
+| <img src="thumbs/flappy_bird.webp" width="230" alt="A trained DQN playing Flappy Bird"> | **[Flappy Bird from raw pixels](Flappy_Bird_CNN/)**<br><br>A DQN and a REINFORCE agent that see nothing but the rendered frame. No position, no velocity, no pipe coordinates.<br><br>**12.21 pipes** per episode over 100 greedy episodes, best 61, trained in **23 minutes** on one RTX 4060.<br><br>*PyTorch, Gymnasium, Pygame* |
+| <img src="thumbs/sat_solver.png" width="230" alt="A 3-SAT instance as a GF(2) matrix after row reduction"> | **[A 3-SAT solver over GF(2)](Groebner_Basis_SAT_Solver/)**<br><br>Clauses become polynomials, triangular Gröbner-style elimination propagates, branching finishes. Every distinct monomial becomes an unknown, and the whole system becomes a matrix.<br><br>**0 wrong verdicts** on 500 instances checked against exhaustive search, and it says plainly which half of it does the work.<br><br>*Python, PySAT for cross-checking* |
+| <img src="thumbs/sorting.webp" width="230" alt="Bubble sort animated in Blender"> | **[Sorting algorithms in 3D](Blender_Python_Scripts/)**<br><br>Bubble and merge sort keyframed and rendered through Blender's Python API, so the access pattern is something you watch rather than read.<br><br>**1407 and 801 frames** at 1080p24, rendered headless in 4 and 2 minutes.<br><br>*Blender 5.2, bpy* |
+| <img src="thumbs/matrix_algorithms.png" width="230" alt="Hand-written transforms checked against numpy.fft"> | **[Matrix algorithms from scratch](Linear_Algebra/)**<br><br>An FFT, a determinant through the Schur complement, an exact integer inverse and a trace that never forms the product. NumPy is the oracle, never the implementation.<br><br>**11 checks** against NumPy, matching to 1e-13. The inverse is exact rather than nearly right.<br><br>*Python, NumPy* |
+| <img src="thumbs/income_tax.png" width="230" alt="Effective tax rate against the bracket schedule"> | **[The French income tax, modelled](Taxes/)**<br><br>Where does an extra euro of gross salary stop being worth much? Exponential fits per bracket, then the Lambert W function to find where the effective rate stops accelerating.<br><br>The tipping point is **59 800 EUR** gross a year.<br><br>*SciPy, Quarto* |
 
 ## Look at what the network actually receives
 
