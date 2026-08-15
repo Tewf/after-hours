@@ -154,11 +154,19 @@ def main():
         values = torch.stack(batch_value).squeeze(-1)
         returns = torch.cat(batch_return)
 
-        advantage = returns - values.detach()
-        advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
+        # Standardise the returns before either head sees them. The rewards here
+        # are +0.1 a frame, +1 a pipe and -10 for dying, so raw returns reach
+        # about +-80 and their mean squared error reaches 21 while the policy
+        # loss sits near 0.05. With a shared trunk and value_coef 0.5 that made
+        # the value term 224 times the policy term, so the convolutions were
+        # being trained almost entirely to regress returns. value_coef 0.5 is
+        # borrowed from implementations that clip rewards to [-1, 1]; without
+        # that clipping the coefficient has to be earned, not assumed.
+        normalised_returns = (returns - returns.mean()) / (returns.std() + 1e-8)
+        advantage = normalised_returns - values.detach()
 
         policy_loss = -(log_probs * advantage).mean()
-        value_loss = F.mse_loss(values, returns)
+        value_loss = F.mse_loss(values, normalised_returns)
         entropy = entropies.mean()
         loss = policy_loss + args.value_coef * value_loss - args.entropy_coef * entropy
 
