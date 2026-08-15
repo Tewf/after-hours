@@ -157,7 +157,7 @@ def main():
         target.load_state_dict(state["policy_state_dict"])
         optimizer.load_state_dict(state["optim_state_dict"])
         start_step, best_pipes = state["step"], state.get("best_pipes", -1.0)
-        print(f"resumed from {last_path} at step {start_step}")
+        print(f"resumed from {last_path} at step {start_step}", flush=True)
 
     os.makedirs(os.path.dirname(os.path.abspath(args.log_csv)), exist_ok=True)
     new_log = not os.path.exists(args.log_csv)
@@ -220,26 +220,26 @@ def main():
             log_file.flush()
             print(f"step {step}/{args.steps}  episodes {episode}  "
                   f"reward {np.mean(recent_rewards):7.2f}  pipes {np.mean(recent_pipes):5.2f} "
-                  f"(max {max(recent_pipes)})  eps {epsilon:.3f}")
+                  f"(max {max(recent_pipes)})  eps {epsilon:.3f}", flush=True)
 
         if step > 0 and step % args.eval_every == 0:
             mean, std, best = evaluate(env, online, device,
                                        args.eval_episodes, args.max_steps)
-            print(f"  eval @ {step}: {mean:.2f} +/- {std:.2f} pipes (best {best})")
+            print(f"  eval @ {step}: {mean:.2f} +/- {std:.2f} pipes (best {best})", flush=True)
             if mean > best_pipes:
                 best_pipes = mean
                 save_checkpoint(best_path, online, optimizer, step, best_pipes)
-                print(f"  new best, saved to {best_path}")
+                print(f"  new best, saved to {best_path}", flush=True)
             save_checkpoint(last_path, online, optimizer, step, best_pipes)
             observation, info = env.reset()
             episode_reward, episode_steps = 0.0, 0
             if mean >= args.target_pipes:
-                print(f"target of {args.target_pipes} pipes reached at step {step}")
+                print(f"target of {args.target_pipes} pipes reached at step {step}", flush=True)
                 break
 
     save_checkpoint(last_path, online, optimizer, step, best_pipes)
     log_file.close()
-    print(f"done. best eval {best_pipes:.2f} pipes, {(time.time() - started) / 60:.1f} min")
+    print(f"done. best eval {best_pipes:.2f} pipes, {(time.time() - started) / 60:.1f} min", flush=True)
 
 
 if __name__ == "__main__":
