@@ -6,7 +6,7 @@
 
 > [Lire en français](README.fr.md)
 
-![A DQN playing Flappy Bird from raw pixels](Flappy_Bird_CNN/demo.webp)
+![Flappy Bird from pixels, sorting in Blender, a 3-SAT instance over GF(2), hand-written matrix algorithms, and the French income tax](banner.png)
 
 What I build when I am bored. Nobody assigned any of it and none of it is
 coursework: it is what I do with a free evening, in machine learning, computer
@@ -25,19 +25,20 @@ checks on every push.
 | **[Matrix algorithms from scratch](Linear_Algebra/)** | An FFT, a determinant, an exact inverse and a trace, each written out rather than called | **11 checks** against numpy, matching to 1e-13. NumPy is the oracle, never the implementation |
 | **[The French income tax, modelled](Taxes/)** | Exponential fits per bracket, then the Lambert W function to find where the effective rate stops accelerating | The tipping point is **59 800 EUR** gross a year |
 
-## The one I would show first
+## Look at what the network actually receives
 
-The Flappy Bird agent plateaued for a long time and no hyperparameter fixed it.
-The bird is yellow, the sky is light blue, and the two are nearly equiluminant,
-so the standard luminance greyscale every Atari pipeline uses was giving the
-bird **22 levels of contrast out of 255** while the pipes got 64. Taking the
-blue channel instead gives 181.
+The lesson that cost the most time here, and the one that transfers. The Flappy
+Bird agent plateaued and no hyperparameter moved it. The bird is yellow, the sky
+is light blue, and the two are nearly equiluminant, so the luminance greyscale
+every Atari pipeline uses was giving the bird **22 levels of contrast out of
+255** while the obstacles got 64. Taking the blue channel instead gives 181.
 
 Same network, same hyperparameters, same seed: greyscale needed 200k steps to
-clear its first pipe and never passed 0.80, and the blue channel cleared one at
-50k and passed ten at 250k. [The write-up is here](Flappy_Bird_CNN/), including
-the run that failed and a scaling bug of mine that made a value loss 224 times
-the policy loss.
+clear its first pipe and never passed 0.80; the blue channel cleared one at 50k
+and passed ten at 250k. It looked like a tuning problem for a long time, and it
+was never a tuning problem. [The write-up is
+here](Flappy_Bird_CNN/), with the run that failed and a scaling bug of mine that
+made one loss term 224 times another.
 
 ## Running any of them
 

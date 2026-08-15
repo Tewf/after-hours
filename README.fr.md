@@ -6,7 +6,7 @@
 
 > [Read in English](README.md)
 
-![Un DQN qui joue à Flappy Bird à partir des pixels bruts](Flappy_Bird_CNN/demo.webp)
+![Flappy Bird à partir des pixels, du tri dans Blender, une instance 3-SAT sur GF(2), des algorithmes matriciels réécrits, et l'impôt français](banner.png)
 
 Ce que je construis quand je m'ennuie. Personne ne me l'a demandé et rien ici
 n'est un devoir : c'est ce que je fais d'une soirée libre, en apprentissage
@@ -25,20 +25,22 @@ vérifications à chaque push.
 | **[Algorithmes matriciels de zéro](Linear_Algebra/)** | Une FFT, un déterminant, un inverse exact et une trace, chacun réécrit plutôt qu'appelé | **11 vérifications** contre numpy, concordance à 1e-13. NumPy sert d'oracle, jamais d'implémentation |
 | **[L'impôt français, modélisé](Taxes/)** | Ajustements exponentiels par tranche, puis la fonction W de Lambert pour trouver où le taux effectif cesse d'accélérer | Le point de bascule est à **59 800 €** de brut annuel |
 
-## Celui que je montrerais en premier
+## Regarder ce que le réseau reçoit vraiment
 
-L'agent Flappy Bird a stagné longtemps et aucun hyperparamètre n'y changeait
-rien. L'oiseau est jaune, le ciel bleu clair, et les deux sont presque
-équiluminants : la conversion en niveaux de gris que tout pipeline Atari utilise
-donnait à l'oiseau **22 niveaux de contraste sur 255**, contre 64 aux tuyaux.
-Prendre le canal bleu en donne 181.
+La leçon qui a coûté le plus de temps ici, et la seule qui se transpose. L'agent
+Flappy Bird a stagné et aucun hyperparamètre n'y changeait rien. L'oiseau est
+jaune, le ciel bleu clair, et les deux sont presque équiluminants : la conversion
+en niveaux de gris que tout pipeline Atari utilise donnait à l'oiseau **22
+niveaux de contraste sur 255**, contre 64 aux obstacles. Prendre le canal bleu en
+donne 181.
 
 Même réseau, mêmes hyperparamètres, même graine : en niveaux de gris il a fallu
 200k pas pour franchir un premier tuyau et le score n'a jamais dépassé 0,80 ; en
-canal bleu, un tuyau à 50k pas et dix à 250k.
-[Le compte rendu est ici](Flappy_Bird_CNN/), y compris la tentative qui a échoué
-et une erreur d'échelle de ma part qui rendait la perte de valeur 224 fois plus
-grande que celle de la politique.
+canal bleu, un tuyau à 50k pas et dix à 250k. Cela a longtemps ressemblé à un
+problème de réglage, et ça n'en a jamais été un.
+[Le compte rendu est ici](Flappy_Bird_CNN/), avec la tentative qui a échoué et
+une erreur d'échelle de ma part qui rendait un terme de perte 224 fois plus grand
+qu'un autre.
 
 ## Lancer l'un d'eux
 
