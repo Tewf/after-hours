@@ -1,40 +1,55 @@
-# Sorting Algorithm Visualizations in Blender
+# Sorting algorithm visualisations in Blender
 
-3D animated visualizations of sorting algorithms using Blender's Python API. Bars of random heights and colors are sorted in real-time with keyframed animations.
+Bars of random height and colour, sorted by keyframed animation so the
+algorithm's access pattern is something you watch rather than read.
 
-## Algorithms
+## Bubble sort
 
-### Bubble Sort (`bubble_sort.py`)
-- Compares adjacent bars and swaps them if out of order
-- Swapping bars flash red during the exchange
-- O(n^2) comparisons visualized step by step
+![Bubble sort animated in Blender](bubble_sort.webp)
 
-### Merge Sort (`merge_sort.py`)
-- Recursively splits bars into halves, moving each group apart in 3D space
-- Merges sorted halves back together, sliding bars into their correct positions
-- The recursive structure is visible as bars physically separate and rejoin
+Compares adjacent bars and swaps them when they are out of order. The pair being
+compared flashes red, so the O(n²) sweep is visible as the red marker walking
+the row again and again, one place shorter each pass. 20 bars, 1407 frames.
 
-## Demos
+## Merge sort
 
-Recorded animations are included in this folder:
+![Merge sort animated in Blender](merge_sort.webp)
 
-- [Bubble Sort screencast](Screencast_bubble_sort.webm) (.webm)
-- [Merge Sort animation](merge_sort_animation.mkv) (.mkv)
+Recursively splits the row into halves that move apart in 3D, then slides them
+back together in order. The recursion depth is legible as physical distance: the
+further a bar has travelled, the deeper the call that owns it. 16 bars, 801
+frames.
 
-> To view: download the files and open locally, or clone the repo. GitHub does not preview these formats inline.
+Both previews are sped up and cut to 640 px. Full 1080p renders are attached to
+the [latest release](https://github.com/Tewf/side-projects/releases/latest).
 
-## Usage
+## Rendering them yourself
 
-1. Open Blender
-2. Go to the Scripting workspace
-3. Open `bubble_sort.py` or `merge_sort.py`
-4. Click Run Script
-5. Press Space to play the animation
+The scripts run inside Blender's Scripting workspace, and also headless:
 
-## Parameters
+```sh
+blender --background --python bubble_sort.py -- --render --output out/bubble_sort.mp4 --seed 7
+blender --background --python merge_sort.py  -- --render --output out/merge_sort.mp4  --seed 7
+```
 
-Both scripts expose these at the bottom of the file:
-- `num_elements` - Number of bars to sort (default: 16-20)
-- `bar_width` - Width of each bar (default: 0.5)
-- `max_height` - Maximum bar height (default: 5-20)
-- `sort_speed` - Frames per swap/action (default: 10)
+On a machine with a discrete GPU behind PRIME, prefix both with
+`__NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia`. Blender takes
+its GL context from the integrated GPU otherwise, which here is the difference
+between four minutes and several hours.
+
+Tested on Blender 5.2.0 LTS. Leave `--render` off to build the scene and stop,
+which is what you want in the GUI.
+
+| Flag | Default | |
+|---|---|---|
+| `--elements` | 20 bubble, 16 merge | Number of bars |
+| `--sort-speed` | 10 | Frames per swap or per merged element |
+| `--resolution` | `1920x1080` | |
+| `--fps` | 24 | |
+| `--seed` | random | Fixes the shuffle, so a render is reproducible |
+| `--render` | off | Render, rather than only building the scene |
+
+Note that both scripts clear the scene first, including the default camera and
+light. `scene_setup.py` puts a camera and a key light back, framed on the whole
+animation rather than on the opening layout, which matters for merge sort
+because its halves travel a long way off the starting row.
