@@ -12,18 +12,10 @@ What I build when I am bored. Nobody assigned any of it and none of it is
 coursework: it is what I do with a free evening, in machine learning, computer
 algebra and applied mathematics.
 
-I am Mohamed, an M1 student in Artificial Intelligence at Université Grenoble
-Alpes. The research I have been paid to do is in
-[bilinear-tensor-optimization](https://github.com/Tewf/bilinear-tensor-optimization)
-(LJK) and [IA-Economie-Strategique](https://github.com/Tewf/IA-Economie-Strategique)
-(GAEL), my coursework is in
-[University-Coursework](https://github.com/Tewf/University-Coursework), and
-[the rest of me is here](https://github.com/Tewf). This repository is the other
-half, the part nobody asked for.
-
-Every folder stands alone, every number below is produced by code in this
-repository, and [CI](https://github.com/Tewf/after-hours/actions/workflows/ci.yml)
-runs the checks on every push.
+Each folder stands alone, with its own README and its own dependencies. Every
+number below is produced by code in this repository, and
+[CI](https://github.com/Tewf/after-hours/actions/workflows/ci.yml) reruns the
+checks on every push.
 
 | | What it is | What it does |
 |---|---|---|

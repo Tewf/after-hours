@@ -12,17 +12,8 @@ Ce que je construis quand je m'ennuie. Personne ne me l'a demandé et rien ici
 n'est un devoir : c'est ce que je fais d'une soirée libre, en apprentissage
 automatique, calcul formel et mathématiques appliquées.
 
-Je suis Mohamed, étudiant en M1 Intelligence Artificielle à l'Université
-Grenoble Alpes. La recherche pour laquelle j'ai été payé est dans
-[bilinear-tensor-optimization](https://github.com/Tewf/bilinear-tensor-optimization)
-(LJK) et [IA-Economie-Strategique](https://github.com/Tewf/IA-Economie-Strategique)
-(GAEL), mes travaux universitaires dans
-[University-Coursework](https://github.com/Tewf/University-Coursework), et
-[le reste est ici](https://github.com/Tewf). Ce dépôt est l'autre moitié, celle
-que personne n'a commandée.
-
-Chaque dossier est autonome, chaque chiffre ci-dessous est produit par du code
-de ce dépôt, et la
+Chaque dossier est autonome, avec son propre README et ses propres dépendances.
+Chaque chiffre ci-dessous est produit par du code de ce dépôt, et la
 [CI](https://github.com/Tewf/after-hours/actions/workflows/ci.yml) rejoue les
 vérifications à chaque push.
 
