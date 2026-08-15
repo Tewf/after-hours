@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          # CPU torch: the runner has no GPU and the CUDA build is 2 GB of nothing useful here.
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy gymnasium pygame opencv-python-headless matplotlib
+
+      - name: Matrix algorithms, 11 checks against numpy
+        working-directory: Linear_Algebra
+        run: python test_linear_algebra.py
+
+      - name: SAT solver, 500 instances against exhaustive search
+        working-directory: Groebner_Basis_SAT_Solver
+        run: python test_bruteforce.py
+
+      - name: Flappy Bird, the environment still steps
+        working-directory: Flappy_Bird_CNN
+        env:
+          SDL_VIDEODRIVER: dummy
+        run: python -u flappy_gym_env.py
+
+      - name: Flappy Bird, REINFORCE trains and the checkpoint evaluates
+        working-directory: Flappy_Bird_CNN
+        env:
+          SDL_VIDEODRIVER: dummy
+        run: |
+          python -u train.py --epochs 4 --episodes-per-epoch 2 \
+            --eval-every 4 --eval-episodes 2 --device cpu \
+            --ckpt-dir /tmp/ci-reinforce --log-csv /tmp/ci-reinforce.csv
+          python -u eval.py --checkpoint /tmp/ci-reinforce/best.pt \
+            --episodes 2 --device cpu
+
+      - name: Flappy Bird, DQN trains and the checkpoint evaluates
+        working-directory: Flappy_Bird_CNN
+        env:
+          SDL_VIDEODRIVER: dummy
+        run: |
+          python -u dqn.py --steps 3000 --learning-starts 500 --buffer-size 2000 \
+            --epsilon-decay-steps 1000 --eval-every 2500 --eval-episodes 2 --device cpu \
+            --ckpt-dir /tmp/ci-dqn --log-csv /tmp/ci-dqn.csv
+          python -u eval.py --checkpoint /tmp/ci-dqn/best.pt --episodes 2 --device cpu
