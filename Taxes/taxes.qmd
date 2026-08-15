@@ -2,7 +2,6 @@
 title: "Impôt sur le Revenu en France (2024)"
 subtitle: "Analyse Mathématique & Modélisation Fiscale"
 author: "HAMLIL Mohamed"
-#date: "2024-05-23" # Or use `r Sys.Date()` if rendering via R/Quarto
 format:
   html:
     theme: flatly         # A modern, flat design (alternatives: journal, darkly)
@@ -17,7 +16,9 @@ format:
     smooth-scroll: true   # Smooth scrolling when clicking links
     highlight-style: arrow # A clean, high-contrast syntax highlighting
     embed-resources: true # Creates a single standalone HTML file (easy to share)
-    css: styles.css       # Optional: link a custom CSS file if you have one
+  typst:
+    papersize: a4
+    number-sections: true
 jupyter: python3
 editor: visual
 ---
@@ -52,8 +53,10 @@ plt.rcParams['figure.figsize'] = (12, 7)
 plt.rcParams['font.size'] = 11
 plt.rcParams['lines.linewidth'] = 2.5
 
-# Barème officiel 2024 (1 part)
-TRANCHES = [0, 11994, 28797, 82441, 177106]
+# Barème de l'impôt 2024 sur les revenus 2023, pour 1 part.
+# Deux seuils portaient une inversion de chiffres (11994 pour 11294, 82441 pour
+# 82341) ; les deux autres étaient déjà exacts.
+TRANCHES = [0, 11294, 28797, 82341, 177106]
 TAUX     = [0, 0.11, 0.30, 0.41, 0.45]
 
 def impot_revenu_france(revenu: float) -> float:
@@ -104,6 +107,7 @@ ax.set_ylabel('Taux (%)', fontweight='bold')
 ax.set_title('Structure de l\'impôt sur le revenu 2024', fontsize=14, fontweight='bold')
 ax.legend()
 plt.tight_layout()
+plt.savefig("taux_marginal_vs_moyen.png", dpi=110, bbox_inches="tight")  # repris dans le README
 plt.show()
 
 ```
@@ -161,7 +165,7 @@ Nous modélisons le taux effectif $\tau(x)$ par une fonction exponentielle décr
 
 $$\tau(x) = a_0 + a_1 e^{a_2 x}$$
 
-avec les contraintes **$a_1 < 0$** et **$a_2 < 0$**, assurant une décroissance exponentielle.
+avec les contraintes **$a_1 < 0$** et **$a_2 < 0$**. Le terme exponentiel décroît, et comme il est affecté d'un coefficient négatif, le taux lui-même **croît** vers son plafond $a_0$.
 
 ### Justification mathématique
 
@@ -169,7 +173,7 @@ La dérivée première du taux moyen est :
 
 $$\tau'(x) = a_1 a_2 e^{a_2 x}$$
 
-Comme $a_1 < 0$, $a_2 < 0$, et $e^{a_2 x} > 0$, nous avons toujours $\tau'(x) < 0$, ce qui garantit une **décroissance monotone** du taux effectif (progressivité fiscale).
+Comme $a_1 < 0$ et $a_2 < 0$, leur produit est **positif**, et $e^{a_2 x} > 0$ : donc $\tau'(x) > 0$. Le taux effectif est **monotone croissant**, ce qui est exactement la progressivité de l'impôt. Il part de $a_0 + a_1$ aux bas revenus et tend vers l'asymptote $a_0$, sans jamais l'atteindre : aucun contribuable ne paie le taux marginal supérieur sur l'intégralité de son revenu.
 
 Cette forme capture parfaitement la concavité de l'impôt (rendements décroissants). Nous automatisons ici l'ajustement par tranches pour éviter la répétition de code.
 
@@ -247,7 +251,7 @@ Après algèbre, cela se réécrit en termes de la fonction de Lambert W :
 
 $$x^* = \frac{1 + W\left(\frac{a_0}{a_1 e}\right)}{a_2}$$
 
-Comme indiqué dans votre analyse précédente, cette équation admet **deux solutions** mathématiques (branches $k=0$ et $k=-1$). Nous calculons les deux et identifions celle qui a un sens économique (positive et dans la plage de revenus).
+Cette équation admet **deux solutions** mathématiques (branches $k=0$ et $k=-1$). Nous calculons les deux et identifions celle qui a un sens économique (positive et dans la plage de revenus).
 
 ```{python}
 #| label: calcul-lambert-complet
@@ -283,7 +287,21 @@ for label, coeffs in coeffs_dict.items():
     })
 
 df_lambert = pd.DataFrame(results_lambert)
-df_lambert["Seuil Retenu (k€)"] = df_lambert[["Solution k=0", "Solution k=-1"]].max(axis=1) # On prend la solution positive significative
+
+def seuil_retenu(ligne):
+    """Retient la solution positive qui tombe dans la plage du modèle.
+
+    Prendre simplement le maximum des deux branches renvoyait un seuil négatif
+    quand les deux étaient négatives, et un seuil hors plage quand l'ajustement
+    de la zone était dégénéré. Ces deux cas sont désormais marqués NaN plutôt
+    que présentés comme des résultats.
+    """
+    bas, haut = (0, np.inf) if ligne["Modèle"] == "Global" else zones[ligne["Modèle"]]
+    candidats = [s for s in (ligne["Solution k=0"], ligne["Solution k=-1"])
+                 if np.isfinite(s) and s > 0 and bas <= s <= haut]
+    return max(candidats) if candidats else np.nan
+
+df_lambert["Seuil Retenu (k€)"] = df_lambert.apply(seuil_retenu, axis=1)
 display(df_lambert)
 
 # Extraction du point critique global pour le graphique
@@ -337,6 +355,7 @@ plt.ylabel("Taux Effectif (%)", fontweight='bold')
 plt.title("Synthèse : Barème, Modèles et Point de Bascule", fontsize=15, fontweight='bold')
 plt.legend(loc='lower right', frameon=True)
 plt.tight_layout()
+plt.savefig("point_de_bascule.png", dpi=110, bbox_inches="tight")  # repris dans le README
 plt.show()
 
 ```
@@ -346,11 +365,23 @@ plt.show()
 Cette analyse confirme la nature **fortement concave** de l'impôt sur le revenu français.
 
 1. **Mécanique :** Le taux marginal (tranches) grimpe en escalier, mais le taux moyen (réel) suit une courbe lisse logarithmique/exponentielle.
-2. **Point de Bascule (~62k€) :** L'analyse mathématique (Lambert W) identifie un seuil autour de **62 000 € de brut annuel**.
+2. **Point de Bascule (~60k€) :** L'analyse mathématique (Lambert W) identifie un seuil autour de **59 800 € de brut annuel**.
 * *Avant ce seuil :* Le taux moyen augmente très vite ; chaque augmentation de salaire est fiscalement "coûteuse" en proportion.
 * *Après ce seuil :* Le taux moyen continue de monter, mais sa dérivée ralentit (zone d'aplatissement).
 
+::: {.callout-note}
+## Limites de l'ajustement par zones
+
+Trois des cinq zones ne produisent pas de seuil exploitable et sont marquées
+`NaN` dans le tableau ci-dessus. La zone `0–17k€` est presque linéaire sur son
+intervalle, donc l'ajustement exponentiel y dégénère (coefficients de l'ordre de
+$10^9$) et sa solution tombe très loin de la plage. La zone `>247k€` ne renvoie
+que des solutions négatives. Seuls le modèle global et deux zones intermédiaires
+donnent un point de bascule dans leur propre intervalle, et c'est le modèle
+global qui porte la conclusion.
+:::
 
 
-**Implication pratique :** C'est autour de ce pivot de 62k€ que les stratégies d'optimisation (épargne retraite, défiscalisation) deviennent statistiquement les plus pertinentes pour contrer la décélération du gain net marginal.
+
+**Implication pratique :** C'est autour de ce pivot de 60k€ que les stratégies d'optimisation (épargne retraite, défiscalisation) deviennent statistiquement les plus pertinentes pour contrer la décélération du gain net marginal.
 
