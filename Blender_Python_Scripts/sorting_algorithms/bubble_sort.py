@@ -1,57 +1,52 @@
-import bpy
+"""Bubble sort as a Blender animation: bars swap, and the pair being compared flashes red.
+
+Run inside Blender's Scripting workspace, or headless:
+
+    blender --background --python bubble_sort.py -- --render --output out/bubble_sort.mp4
+"""
+
+import os
+import sys
 import random
 
-# Clear existing objects
-bpy.ops.object.select_all(action='SELECT')
-bpy.ops.object.delete(use_global=False)
+import bpy
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))
+                if "__file__" in globals() else os.getcwd())
+import scene_setup  # noqa: E402
+
 
 def change_object_color(obj, color=(1, 1, 1, 1)):
-    """
-    Changes the color of the given object by applying a material with the specified color.
-
-    Parameters:
-    obj (bpy.types.Object): The Blender object to change color for.
-    color (tuple): RGBA values for the color (Red, Green, Blue, Alpha).
-    """
-    # Ensure the object has a material; create one if it doesn't
+    """Apply a material of the given RGBA colour, creating one if needed."""
     if not obj.data.materials:
         mat = bpy.data.materials.new(name="Material")
         obj.data.materials.append(mat)
     else:
         mat = obj.data.materials[0]
 
-    # Enable nodes for the material and access the Principled BSDF shader
-    mat.use_nodes = True
+    # No use_nodes assignment: it is a no-op since 5.0 and raises in 6.0.
     bsdf = mat.node_tree.nodes.get("Principled BSDF")
-
     if bsdf is None:
         bsdf = mat.node_tree.nodes.new(type="ShaderNodeBsdfPrincipled")
 
-    # Set the base color of the material
     bsdf.inputs["Base Color"].default_value = color
-
-    # Also set the viewport display color
     mat.diffuse_color = color
     obj.active_material = mat
 
+
 def get_object_color(obj):
-    """
-    Retrieves the base color of the given object's material.
-
-    Parameters:
-    obj (bpy.types.Object): The Blender object to get the color from.
-
-    Returns:
-    tuple: A tuple representing the RGBA color (Red, Green, Blue, Alpha), with each component ranging from 0 to 1.
-           Returns None if the object has no material or the material does not use nodes.
-    """
-    if obj.active_material and obj.active_material.use_nodes:
+    """Read back the base colour, so a highlighted bar can be restored."""
+    if obj.active_material:
         bsdf = obj.active_material.node_tree.nodes.get("Principled BSDF")
         if bsdf:
-            # Convert the default_value to a tuple to store the color
-            color = tuple(bsdf.inputs["Base Color"].default_value)
-            return color
+            return tuple(bsdf.inputs["Base Color"].default_value)
     return None
+
+
+def key_color(bar, frame):
+    bar.active_material.node_tree.nodes["Principled BSDF"].inputs["Base Color"] \
+        .keyframe_insert(data_path="default_value", frame=frame)
+
 
 def create_bars(num_elements=20, bar_width=0.5, max_height=5):
     data = [random.randint(1, max_height) for _ in range(num_elements)]
@@ -61,83 +56,68 @@ def create_bars(num_elements=20, bar_width=0.5, max_height=5):
         bar = bpy.context.object
         bar.scale.x = bar_width
         bar.scale.z = value
-        color = (random.random(), random.random(), random.random(), 1)
-        change_object_color(bar, color)
+        change_object_color(bar, (random.random(), random.random(), random.random(), 1))
         bars.append(bar)
     return bars
 
+
 def bubble_sort_animation(bars, sort_speed):
     global frame_num
-    swap_duration = sort_speed
+    half_swap = sort_speed // 2  # integer: fractional frames never render
     n = len(bars)
     for i in range(n):
         for j in range(n - i - 1):
-            bar1 = bars[j]
-            bar2 = bars[j + 1]
+            bar1, bar2 = bars[j], bars[j + 1]
 
-            # Check if swap is needed
             if bar1.scale.z > bar2.scale.z:
                 bar1.keyframe_insert(data_path="location", frame=frame_num)
                 bar2.keyframe_insert(data_path="location", frame=frame_num)
 
-            # Store original colors using get_object_color function
                 original_color1 = get_object_color(bar1)
                 original_color2 = get_object_color(bar2)
-
-            # Insert keyframes for colors at the current frame
                 change_object_color(bar1, original_color1)
                 change_object_color(bar2, original_color2)
-                bar1.active_material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].keyframe_insert(data_path='default_value', frame=frame_num)
-                bar2.active_material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].keyframe_insert(data_path='default_value', frame=frame_num)
+                key_color(bar1, frame_num)
+                key_color(bar2, frame_num)
 
-                frame_num+=1
-                # Change colors to red for swapping using change_object_color function
-                change_object_color(bar1, color=(1, 0, 0, 1))  # Red
-                change_object_color(bar2, color=(1, 0, 0, 1))  # Red
+                frame_num += 1
+                change_object_color(bar1, color=(1, 0, 0, 1))
+                change_object_color(bar2, color=(1, 0, 0, 1))
+                key_color(bar1, frame_num)
+                key_color(bar2, frame_num)
 
-                # Insert keyframes for color change at the start of the swap
-                bar1.active_material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].keyframe_insert(data_path='default_value', frame=frame_num)
-                bar2.active_material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].keyframe_insert(data_path='default_value', frame=frame_num)
-                frame_num+=swap_duration/2
-                # Record initial positions
-                x1 = bar1.location.x
-                x2 = bar2.location.x
-
-                # Swap positions
-                bar1.location.x = x2
-                bar2.location.x = x1
-
-                # Insert keyframes at the end of the swap
+                frame_num += half_swap
+                bar1.location.x, bar2.location.x = bar2.location.x, bar1.location.x
                 bar1.keyframe_insert(data_path="location", frame=frame_num)
-                bar2.keyframe_insert(data_path="location", frame=frame_num )
+                bar2.keyframe_insert(data_path="location", frame=frame_num)
 
-                # Revert colors back to original using change_object_color function
                 change_object_color(bar1, color=original_color1)
                 change_object_color(bar2, color=original_color2)
+                key_color(bar1, frame_num)
+                key_color(bar2, frame_num)
 
-                # Insert keyframes for color change at the end of the swap
-                bar1.active_material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].keyframe_insert(data_path='default_value', frame=frame_num )
-                bar2.active_material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].keyframe_insert(data_path='default_value', frame=frame_num )
-
-                # Swap the bars in the list
                 bars[j], bars[j + 1] = bars[j + 1], bars[j]
 
-            # Increment frame_num after each comparison
-            frame_num += swap_duration/2
+            frame_num += half_swap
 
-# Main code
-num_elements = 20          # Number of elements to sort
-bar_width = 0.5            # Width of each bar
-max_height = 5             # Max height for bars
-sort_speed = 10            # Frames per swap (speed of sorting)
-frame_num = 1              # Start frame for the animation
+
+args = scene_setup.parse_args("out/bubble_sort.mp4")
+if args.seed is not None:
+    random.seed(args.seed)
+
+num_elements = args.elements or 20     # Number of elements to sort
+bar_width = 0.5                        # Width of each bar
+max_height = 5                         # Max height for bars
+sort_speed = args.sort_speed or 10     # Frames per swap
+frame_num = 1                          # Start frame for the animation
+
+scene_setup.clear_scene()
+scene_setup.use_linear_keyframes()
 
 bars = create_bars(num_elements, bar_width, max_height)
-
-# Set initial keyframes for positions and colors
 for bar in bars:
     bar.keyframe_insert(data_path="location", frame=frame_num)
-    # Insert initial keyframe for color
-    bar.active_material.node_tree.nodes["Principled BSDF"].inputs["Base Color"].keyframe_insert(data_path='default_value', frame=frame_num)
+    key_color(bar, frame_num)
 
 bubble_sort_animation(bars, sort_speed)
+scene_setup.finish(bars, frame_num, args, direction=(0.0, -1.0, 0.22))
