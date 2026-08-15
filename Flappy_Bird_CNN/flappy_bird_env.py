@@ -1,7 +1,5 @@
 # %%
 import os
-import gymnasium as gym
-from gymnasium import spaces
 import numpy as np
 import pygame
 import sys
@@ -11,6 +9,7 @@ from pygame.locals import QUIT, KEYDOWN, K_ESCAPE, K_SPACE, K_UP
 # ---- Global state (set by init_pygame) ----
 window = None
 game_images = {}
+_initialized = False
 window_width = 600
 window_height = 499
 elevation = 0
@@ -26,15 +25,27 @@ BIRD_INIT_VEL = -9
 PIPE_OFFSET = 100
 
 # %%
-def init_pygame(title='Flappy Bird'):
-    """Initialize pygame, set globals, and load all images. Call once before playing."""
+def init_pygame(title='Flappy Bird', headless=False, force=False):
+    """Initialize pygame, set globals, and load all images.
+
+    Idempotent: training calls this once per episode, and reopening the window
+    plus reloading fifteen sprites each time cost more than the network did.
+    Pass headless=True to run with no display (SDL's dummy driver still
+    satisfies set_mode and convert_alpha, which the sprite loading needs).
+    """
     global window, game_images, window_width, window_height
-    global elevation, framepersecond, framepersecond_clock
+    global elevation, framepersecond, framepersecond_clock, _initialized
+
+    if _initialized and not force:
+        return
 
     window_width = 600
     window_height = 499
     elevation = window_height * 0.8
     framepersecond = 32
+
+    if headless:
+        os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
 
     pygame.init()
     framepersecond_clock = pygame.time.Clock()
@@ -52,6 +63,7 @@ def init_pygame(title='Flappy Bird'):
     game_images['background'] = pygame.image.load(os.path.join(base, 'background.jpg')).convert_alpha()
     pipe_img = pygame.image.load(os.path.join(base, 'pipe.png')).convert_alpha()
     game_images['pipeimage'] = (pygame.transform.rotate(pipe_img, 180), pipe_img)
+    _initialized = True
 
 # %%
 def _create_pipe():
@@ -90,9 +102,8 @@ def _is_game_over(bird_x, bird_y, up_pipes, down_pipes):
     bird_h = game_images['flappybird'].get_height()
 
     for pipe in up_pipes:
-        if vertical_overlap := (bird_y < pipe_h + pipe['y']):
-            if abs(bird_x - pipe['x']) < pipe_w:
-                return True
+        if bird_y < pipe_h + pipe['y'] and abs(bird_x - pipe['x']) < pipe_w:
+            return True
 
     for pipe in down_pipes:
         if (bird_y + bird_h > pipe['y']) and abs(bird_x - pipe['x']) < pipe_w:
@@ -188,11 +199,15 @@ def flappygame():
         framepersecond_clock.tick(framepersecond)
 
 # %%
-def flappygame_generator(action=None):
+def flappygame_generator(action=None, realtime=True):
     """
     A coroutine-style generator for AI training.
-    Yields (frame, score) and accepts an action (0 or 1) via .send().
+    Yields (frame, score, done) and accepts an action (0 or 1) via .send().
     If action==1, the bird flaps on that step.
+
+    realtime=False drops the frame-rate cap. The cap lives inside this loop, so
+    with it on every training step is limited to 32 per second no matter how
+    fast the policy runs. Leave it on only when a human is watching.
     """
     score = 0
     bird_x = int(window_width / 5)
@@ -204,16 +219,22 @@ def flappygame_generator(action=None):
     canvas = pygame.Surface((window_width, window_height))
 
     def _grab_frame():
-        arr = pygame.surfarray.array3d(canvas)
-        return np.transpose(arr, (1, 0, 2))
+        # pixels3d is a direct view; array3d converts pixel by pixel and costs
+        # 7.2 ms a frame here against 0.9 ms, which at training rates dominates
+        # everything else the step does.
+        view = pygame.surfarray.pixels3d(canvas)
+        frame = np.transpose(view, (1, 0, 2)).copy()
+        del view  # releases the surface lock
+        return frame
 
     while True:
         # handle quit events
-        for e in pygame.event.get():
-            if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
-                canvas.fill((255, 255, 255))
-                yield _grab_frame(), score
-                return
+        if realtime:
+            for e in pygame.event.get():
+                if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
+                    canvas.fill((255, 255, 255))
+                    yield _grab_frame(), score, True
+                    return
 
         # apply external action
         if action == 1 and bird_y > 0:
@@ -223,7 +244,7 @@ def flappygame_generator(action=None):
         # collision check
         if _is_game_over(bird_x, bird_y, up_pipes, down_pipes):
             canvas.fill((255, 255, 255))
-            yield _grab_frame(), score
+            yield _grab_frame(), score, True
             return
 
         score += _check_score(bird_x, up_pipes)
@@ -232,18 +253,19 @@ def flappygame_generator(action=None):
         _update_pipes(up_pipes, down_pipes)
         _draw_frame(canvas, bird_x, bird_y, up_pipes, down_pipes, score)
 
-        framepersecond_clock.tick(framepersecond)
-        action = yield _grab_frame(), score
+        if realtime:
+            framepersecond_clock.tick(framepersecond)
+        action = yield _grab_frame(), score, False
 
 # %%
 def run_generator():
     """Drive flappygame_generator with real-time key events."""
     init_pygame('Flappy Bird (generator)')
     gen = flappygame_generator(action=None)
-    frame, score = next(gen)
+    frame, score, done = next(gen)
 
     running = True
-    while running:
+    while running and not done:
         action = 0
         for e in pygame.event.get():
             if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
@@ -252,7 +274,7 @@ def run_generator():
                 action = 1
 
         try:
-            frame, score = gen.send(action)
+            frame, score, done = gen.send(action)
         except StopIteration:
             break
 
