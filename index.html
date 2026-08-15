@@ -72,6 +72,10 @@
 <section>
   <h2><a href="https://github.com/Tewf/after-hours/tree/main/Groebner_Basis_SAT_Solver">A 3-SAT solver over GF(2)</a></h2>
   <p class="result">0 wrong verdicts on 500 instances checked against exhaustive search</p>
+  <figure>
+    <img src="Groebner_Basis_SAT_Solver/algebra_encoding.png" alt="A 3-SAT instance as a GF(2) matrix, before and after row reduction">
+    <figcaption>Every clause becomes a polynomial; every distinct monomial becomes an unknown. The red staircase is the leading term of each equation, which is the triangular structure the method is named for.</figcaption>
+  </figure>
   <p>
     Clauses become polynomials over GF(2), a triangular Gröbner-style elimination
     propagates what it can, and branching finishes the job. Verdicts are checked
@@ -87,6 +91,10 @@
     The folder also keeps a paper of mine from 2023 whose central claim is wrong,
     with the failing line located and explained.
   </p>
+  <figure>
+    <img src="Groebner_Basis_SAT_Solver/elimination_contribution.png" alt="Unsatisfiable instances against how many the elimination caught">
+    <figcaption>Across 272 unsatisfiable instances the elimination step alone caught none. Measured, not estimated.</figcaption>
+  </figure>
 </section>
 
 <section>

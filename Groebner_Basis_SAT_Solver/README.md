@@ -5,6 +5,41 @@ polynomials in the Boolean ring GF(2)[x₁,…,xₙ]/⟨xᵢ²−xᵢ⟩, where 
 assignments are exactly the common zeros; triangular Gröbner-style elimination
 propagates, and branching completes the search.
 
+## The algebra, drawn
+
+![A 3-SAT instance as a GF(2) linear system, before and after row reduction](algebra_encoding.png)
+
+Each clause becomes one polynomial whose zeros are exactly the assignments
+satisfying it. Treat every distinct monomial as an unknown and the whole system
+is a matrix over GF(2): 14 equations over 33 monomials for the small instance
+above. Row reduction pushes it into echelon form, and the red staircase is the
+leading term of each equation, which is the triangular structure the method is
+named for.
+
+Both panels are produced by [`visualise.py`](visualise.py) from
+`monomial_basis`, `system_to_matrix` and `gauss_elim_gf2` in
+[`linear_algebra.py`](linear_algebra.py), so the picture is the same code path
+the solver uses, not an illustration of it.
+
+## Two things the pictures make harder to overstate
+
+![Satisfiable fraction against the clause-to-variable ratio](phase_transition.png)
+
+Random 3-SAT gets hard near m/n ≈ 4.26, and this repository benchmarks at 3.0,
+where every one of 60 instances per ratio came back satisfiable. A high success
+rate there measures the instance distribution, not the solver. The measured
+crossing sits right of 4.26 because n=12 is small and the transition only
+sharpens as n grows.
+
+![Unsatisfiable instances against how many the elimination caught](elimination_contribution.png)
+
+Across 272 genuinely unsatisfiable instances spanning m/n from 2 to 7, the
+elimination step on its own caught **none**. It is sound, in that it never
+claimed UNSAT on a satisfiable instance, and it is nearly inert. The branching
+does the work.
+
+Regenerate both with `python visualise.py`, about 80 seconds.
+
 ## What it does
 
 * **Polynomial encoding** of 3-SAT clauses as GF(2) ideals with idempotence xᵢ² = xᵢ

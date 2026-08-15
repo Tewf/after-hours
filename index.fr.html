@@ -74,6 +74,10 @@
 <section>
   <h2><a href="https://github.com/Tewf/after-hours/tree/main/Groebner_Basis_SAT_Solver">Un solveur 3-SAT sur GF(2)</a></h2>
   <p class="result">0 verdict faux sur 500 instances confrontées à une recherche exhaustive</p>
+  <figure>
+    <img src="Groebner_Basis_SAT_Solver/algebra_encoding.png" alt="Une instance 3-SAT comme système linéaire sur GF(2), avant et après réduction">
+    <figcaption>Chaque clause devient un polynôme ; chaque monôme distinct devient une inconnue. L'escalier rouge est le terme dominant de chaque équation, la structure triangulaire qui donne son nom à la méthode.</figcaption>
+  </figure>
   <p>
     Les clauses deviennent des polynômes sur GF(2), une élimination triangulaire
     à la Gröbner propage ce qu'elle peut, et le branchement termine. Les verdicts
@@ -91,6 +95,10 @@
     un article de 2023 dont l'affirmation centrale est fausse, avec la ligne
     fautive localisée et expliquée.
   </p>
+  <figure>
+    <img src="Groebner_Basis_SAT_Solver/elimination_contribution.png" alt="Instances insatisfiables face au nombre que l'élimination a détecté">
+    <figcaption>Sur 272 instances insatisfiables, l'élimination seule n'en a détecté aucune. Mesuré, pas estimé.</figcaption>
+  </figure>
 </section>
 
 <section>
