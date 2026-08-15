@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>after-hours</title>
+<meta name="description" content="What Mohamed Hamlil builds when he is bored: reinforcement learning from raw pixels, a 3-SAT solver over GF(2), matrix algorithms from scratch, Blender renders, and the French income tax modelled.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ctext y=%2726%27 font-size=%2726%27%3E%F0%9F%A6%89%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="lang"><a href="index.fr.html">Version française</a></div>
+  <h1>after-hours</h1>
+  <p class="tagline">What I build when I am bored.</p>
+  <p class="who">
+    I am Mohamed, an M1 student in Artificial Intelligence at Université Grenoble
+    Alpes. The research I have been paid to do is at the
+    <a href="https://github.com/Tewf/bilinear-tensor-optimization">LJK</a> and
+    <a href="https://github.com/Tewf/IA-Economie-Strategique">GAEL</a>, my
+    coursework is
+    <a href="https://github.com/Tewf/University-Coursework">here</a>, and this is
+    the other half: the part nobody asked for. Every number on this page is
+    produced by code in the repository, and CI reruns the checks on every push.
+  </p>
+  <div class="badges">
+    <a href="https://github.com/Tewf/after-hours">Repository</a>
+    <a href="https://github.com/Tewf/after-hours/actions/workflows/ci.yml">CI</a>
+    <a href="https://github.com/Tewf/after-hours/releases/latest">Weights and renders</a>
+    <a href="https://github.com/Tewf">All my repositories</a>
+  </div>
+</header>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Flappy_Bird_CNN">Flappy Bird from raw pixels</a></h2>
+  <p class="result">12.21 pipes per episode over 100 greedy episodes, best 61, trained in 23 minutes on one RTX 4060</p>
+  <figure class="game">
+    <img src="Flappy_Bird_CNN/demo.webp" alt="A trained DQN playing Flappy Bird">
+    <figcaption>The trained agent. It sees nothing but this picture: no position, no velocity, no pipe coordinates.</figcaption>
+  </figure>
+  <p>
+    The agent plateaued for a long time and no hyperparameter fixed it. The bird
+    is yellow, the sky is light blue, and the two are nearly equiluminant, so the
+    standard luminance greyscale every Atari pipeline uses was giving the bird
+    <strong>22 levels of contrast out of 255</strong> while the pipes got 64.
+    Taking the blue channel instead gives 181.
+  </p>
+  <figure>
+    <img src="Flappy_Bird_CNN/observation.png" alt="The same frame as luminance greyscale and as the blue channel">
+    <figcaption>Left, what the game renders. Middle, what the network was receiving. Right, what it receives now.</figcaption>
+  </figure>
+  <div class="two">
+    <figure>
+      <img src="Flappy_Bird_CNN/channel_ablation.png" alt="Learning curves for the two observation channels">
+      <figcaption>Same network, same hyperparameters, same seed. Only the colour channel differs.</figcaption>
+    </figure>
+    <figure>
+      <img src="Flappy_Bird_CNN/learning_curve.png" alt="DQN against REINFORCE with a value baseline">
+      <figcaption>REINFORCE never cleared a pipe: 756 gradient updates against the DQN's 61,250 over comparable experience.</figcaption>
+    </figure>
+  </div>
+  <p>
+    Greyscale needed 200k steps to clear its first pipe and never passed 0.80.
+    The blue channel cleared one at 50k and passed ten at 250k. The write-up also
+    keeps the run that failed, and a scaling bug of mine that made a value loss
+    224 times the policy loss.
+  </p>
+</section>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Groebner_Basis_SAT_Solver">A 3-SAT solver over GF(2)</a></h2>
+  <p class="result">0 wrong verdicts on 500 instances checked against exhaustive search</p>
+  <p>
+    Clauses become polynomials over GF(2), a triangular Gröbner-style elimination
+    propagates what it can, and branching finishes the job. Verdicts are checked
+    by validating the returned assignment, not just the SAT or UNSAT answer.
+  </p>
+  <p>
+    The part worth reading is where it refuses to oversell itself. The
+    elimination step alone is sound but weak: across 285 genuinely unsatisfiable
+    instances it flagged one, and at n=20 it resolves 0.00% of systems on its
+    own, so essentially all the work is done by the branching. The benchmark
+    ratio is also below the random 3-SAT phase transition, which means a high
+    success rate there measures the instance distribution rather than the solver.
+    The folder also keeps a paper of mine from 2023 whose central claim is wrong,
+    with the failing line located and explained.
+  </p>
+</section>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Blender_Python_Scripts">Sorting algorithms in 3D</a></h2>
+  <p class="result">1407 and 801 frames at 1080p24, rendered headless in 4 and 2 minutes</p>
+  <div class="two">
+    <figure>
+      <img src="Blender_Python_Scripts/sorting_algorithms/bubble_sort.webp" alt="Bubble sort animated in Blender">
+      <figcaption>Bubble sort. The red marker walking the row again and again, one place shorter each pass, is the O(n²).</figcaption>
+    </figure>
+    <figure>
+      <img src="Blender_Python_Scripts/sorting_algorithms/merge_sort.webp" alt="Merge sort animated in Blender">
+      <figcaption>Merge sort. Recursion depth is legible as physical distance from the starting row.</figcaption>
+    </figure>
+  </div>
+  <p>
+    Both are driven entirely from Blender's Python API and render from the
+    command line. The scripts previously could not be rendered at all: they
+    delete the default camera and light on their first line and set no frame
+    range, so Blender's stock limit of 250 frames captured 18% of bubble sort
+    against a black screen.
+  </p>
+</section>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Linear_Algebra">Matrix algorithms from scratch</a></h2>
+  <p class="result">11 checks against NumPy, matching to 1e-13</p>
+  <figure>
+    <img src="Linear_Algebra/fft_accuracy.png" alt="Hand-written transforms against numpy.fft">
+    <figcaption>A radix-2 Cooley-Tukey transform written out, checked against <code>numpy.fft</code> up to n=64.</figcaption>
+  </figure>
+  <p>
+    An FFT, a determinant through the Schur complement, an exact integer matrix
+    inverse and a trace that never forms the product. NumPy appears throughout as
+    the oracle each result is checked against, never as the implementation: the
+    determinant does not call <code>numpy.linalg.det</code> and the transforms do
+    not call <code>numpy.fft</code>.
+  </p>
+  <p>
+    None of them is fast, and each notebook plots its own cost so the gap is
+    visible rather than implied. The inverse is exact rather than nearly right:
+    <code>A @ A_inverse</code> is the identity, not close to it.
+  </p>
+</section>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Taxes">The French income tax, modelled</a></h2>
+  <p class="result">The tipping point is 59 800 EUR gross a year</p>
+  <figure>
+    <img src="Taxes/point_de_bascule.png" alt="Effective tax rate against the bracket schedule, with the tipping point marked">
+    <figcaption>The bracket schedule is a staircase; the rate anyone actually pays is the smooth curve underneath it.</figcaption>
+  </figure>
+  <p>
+    Where does an extra euro of gross salary stop being worth much? Fitting the
+    effective rate as an exponential approach to an asymptote and solving for
+    where its slope stops growing needs the Lambert W function, because the
+    equation takes the form <code>v·e^v = c</code>. Both branches are computed and
+    the one that lands inside the income range is kept.
+    <a href="Taxes/taxes.html">Read the full report</a>, in French.
+  </p>
+</section>
+
+<footer>
+  MIT licensed. Built in evenings and weekends by
+  <a href="https://github.com/Tewf">Mohamed Hamlil</a>.
+</footer>
+
+</div>
+</body>
+</html>

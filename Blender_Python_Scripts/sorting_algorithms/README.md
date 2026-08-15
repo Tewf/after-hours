@@ -21,7 +21,7 @@ further a bar has travelled, the deeper the call that owns it. 16 bars, 801
 frames.
 
 Both previews are sped up and cut to 640 px. Full 1080p renders are attached to
-the [latest release](https://github.com/Tewf/side-projects/releases/latest).
+the [latest release](https://github.com/Tewf/after-hours/releases/latest).
 
 ## Rendering them yourself
 

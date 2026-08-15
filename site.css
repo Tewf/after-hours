@@ -1,0 +1,103 @@
+/* after-hours project page. No external requests, no build step, no framework. */
+
+:root {
+  --bg: #ffffff;
+  --surface: #f6f8fa;
+  --text: #1f2328;
+  --muted: #59636e;
+  --line: #d8dee4;
+  --accent: #0969da;
+  --figure-bg: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --text: #e6edf3;
+    --muted: #9198a1;
+    --line: #30363d;
+    --accent: #4493f8;
+    --figure-bg: #f6f8fa;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 20px 80px; }
+
+header { padding: 56px 0 8px; }
+
+h1 { font-size: 2.6rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+
+.lang { float: right; margin-top: 12px; font-size: 0.9rem; }
+
+.tagline { color: var(--muted); font-size: 1.15rem; margin: 0 0 22px; }
+
+.who { color: var(--muted); font-size: 0.97rem; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.badges { margin: 18px 0 30px; display: flex; gap: 8px; flex-wrap: wrap; }
+.badges a {
+  border: 1px solid var(--line); border-radius: 6px; padding: 4px 11px;
+  font-size: 0.86rem; color: var(--muted); background: var(--surface);
+}
+.badges a:hover { text-decoration: none; border-color: var(--accent); color: var(--accent); }
+
+section {
+  border-top: 1px solid var(--line);
+  padding: 38px 0 8px;
+}
+
+h2 { font-size: 1.5rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+
+.result {
+  display: inline-block; margin: 0 0 16px;
+  font-variant-numeric: tabular-nums; font-weight: 600;
+  color: var(--text); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; padding: 5px 12px;
+  font-size: 0.95rem;
+}
+
+figure { margin: 0 0 18px; }
+
+figure img {
+  width: 100%; height: auto; display: block;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--figure-bg);
+}
+
+figcaption { color: var(--muted); font-size: 0.86rem; margin-top: 8px; }
+
+/* The game capture is 360 px wide. Stretching it to the column blurs it, and
+   it is pixel art, so it should scale crisply rather than smoothly. */
+figure.game img {
+  max-width: 470px; margin: 0 auto;
+  image-rendering: pixelated;
+}
+figure.game figcaption { text-align: center; }
+
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 620px) { .two { grid-template-columns: 1fr; } }
+
+p { margin: 0 0 14px; }
+
+footer {
+  border-top: 1px solid var(--line); margin-top: 44px; padding-top: 22px;
+  color: var(--muted); font-size: 0.9rem;
+}
+
+code {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 4px;
+  padding: 1px 5px; font-size: 0.88em;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}

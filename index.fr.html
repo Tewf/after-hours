@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>after-hours</title>
+<meta name="description" content="Ce que Mohamed Hamlil construit quand il s'ennuie : apprentissage par renforcement à partir des pixels bruts, un solveur 3-SAT sur GF(2), des algorithmes matriciels réécrits de zéro, des rendus Blender, et l'impôt français modélisé.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ctext y=%2726%27 font-size=%2726%27%3E%F0%9F%A6%89%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="lang"><a href="index.html">English version</a></div>
+  <h1>after-hours</h1>
+  <p class="tagline">Ce que je construis quand je m'ennuie.</p>
+  <p class="who">
+    Je suis Mohamed, étudiant en M1 Intelligence Artificielle à l'Université
+    Grenoble Alpes. La recherche pour laquelle j'ai été payé est au
+    <a href="https://github.com/Tewf/bilinear-tensor-optimization">LJK</a> et au
+    <a href="https://github.com/Tewf/IA-Economie-Strategique">GAEL</a>, mes
+    travaux universitaires sont
+    <a href="https://github.com/Tewf/University-Coursework">ici</a>, et voici
+    l'autre moitié : celle que personne n'a commandée. Chaque chiffre de cette
+    page est produit par du code du dépôt, et la CI rejoue les vérifications à
+    chaque push.
+  </p>
+  <div class="badges">
+    <a href="https://github.com/Tewf/after-hours">Dépôt</a>
+    <a href="https://github.com/Tewf/after-hours/actions/workflows/ci.yml">CI</a>
+    <a href="https://github.com/Tewf/after-hours/releases/latest">Poids et rendus</a>
+    <a href="https://github.com/Tewf">Tous mes dépôts</a>
+  </div>
+</header>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Flappy_Bird_CNN">Flappy Bird à partir des pixels bruts</a></h2>
+  <p class="result">12,21 tuyaux par épisode sur 100 épisodes déterministes, record 61, entraîné en 23 minutes sur une seule RTX 4060</p>
+  <figure class="game">
+    <img src="Flappy_Bird_CNN/demo.webp" alt="Un DQN entraîné qui joue à Flappy Bird">
+    <figcaption>L'agent entraîné. Il ne voit rien d'autre que cette image : ni position, ni vitesse, ni coordonnées des tuyaux.</figcaption>
+  </figure>
+  <p>
+    L'agent a stagné longtemps et aucun hyperparamètre n'y changeait rien.
+    L'oiseau est jaune, le ciel bleu clair, et les deux sont presque
+    équiluminants : la conversion en niveaux de gris que tout pipeline Atari
+    utilise donnait à l'oiseau <strong>22 niveaux de contraste sur 255</strong>,
+    contre 64 aux tuyaux. Prendre le canal bleu en donne 181.
+  </p>
+  <figure>
+    <img src="Flappy_Bird_CNN/observation.png" alt="La même image en niveaux de gris puis en canal bleu">
+    <figcaption>À gauche, ce que le jeu affiche. Au milieu, ce que le réseau recevait. À droite, ce qu'il reçoit désormais.</figcaption>
+  </figure>
+  <div class="two">
+    <figure>
+      <img src="Flappy_Bird_CNN/channel_ablation.png" alt="Courbes d'apprentissage pour les deux canaux d'observation">
+      <figcaption>Même réseau, mêmes hyperparamètres, même graine. Seul le canal de couleur change.</figcaption>
+    </figure>
+    <figure>
+      <img src="Flappy_Bird_CNN/learning_curve.png" alt="DQN contre REINFORCE avec baseline de valeur">
+      <figcaption>REINFORCE n'a jamais franchi un tuyau : 756 mises à jour de gradient contre 61 250 pour le DQN, à expérience comparable.</figcaption>
+    </figure>
+  </div>
+  <p>
+    En niveaux de gris il a fallu 200k pas pour franchir un premier tuyau, et le
+    score n'a jamais dépassé 0,80. En canal bleu, un tuyau à 50k pas et dix à
+    250k. Le compte rendu garde aussi la tentative qui a échoué, et une erreur
+    d'échelle de ma part qui rendait la perte de valeur 224 fois plus grande que
+    celle de la politique.
+  </p>
+</section>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Groebner_Basis_SAT_Solver">Un solveur 3-SAT sur GF(2)</a></h2>
+  <p class="result">0 verdict faux sur 500 instances confrontées à une recherche exhaustive</p>
+  <p>
+    Les clauses deviennent des polynômes sur GF(2), une élimination triangulaire
+    à la Gröbner propage ce qu'elle peut, et le branchement termine. Les verdicts
+    sont vérifiés en validant l'affectation renvoyée, pas seulement la réponse
+    SAT ou UNSAT.
+  </p>
+  <p>
+    Le plus intéressant est là où il refuse de se survendre. L'étape
+    d'élimination seule est correcte mais faible : sur 285 instances réellement
+    insatisfiables elle en a signalé une, et à n=20 elle résout 0,00 % des
+    systèmes par elle-même, donc c'est le branchement qui fait tout le travail.
+    Le ratio du banc d'essai se situe aussi en dessous de la transition de phase
+    du 3-SAT aléatoire, ce qui veut dire qu'un bon taux de réussite y mesure la
+    distribution des instances plutôt que le solveur. Le dossier conserve enfin
+    un article de 2023 dont l'affirmation centrale est fausse, avec la ligne
+    fautive localisée et expliquée.
+  </p>
+</section>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Blender_Python_Scripts">Algorithmes de tri en 3D</a></h2>
+  <p class="result">1407 et 801 images en 1080p24, rendues sans interface en 4 et 2 minutes</p>
+  <div class="two">
+    <figure>
+      <img src="Blender_Python_Scripts/sorting_algorithms/bubble_sort.webp" alt="Tri à bulles animé dans Blender">
+      <figcaption>Tri à bulles. Le marqueur rouge qui parcourt la rangée encore et encore, une place plus court à chaque passe, c'est le O(n²).</figcaption>
+    </figure>
+    <figure>
+      <img src="Blender_Python_Scripts/sorting_algorithms/merge_sort.webp" alt="Tri fusion animé dans Blender">
+      <figcaption>Tri fusion. La profondeur de récursion se lit comme une distance physique à la rangée de départ.</figcaption>
+    </figure>
+  </div>
+  <p>
+    Les deux sont pilotés entièrement depuis l'API Python de Blender et se
+    rendent en ligne de commande. Les scripts ne pouvaient auparavant pas être
+    rendus du tout : ils suppriment la caméra et la lumière par défaut dès leur
+    première ligne et ne fixent aucune plage d'images, si bien que la limite de
+    250 images de Blender capturait 18 % du tri à bulles sur un écran noir.
+  </p>
+</section>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Linear_Algebra">Algorithmes matriciels de zéro</a></h2>
+  <p class="result">11 vérifications contre NumPy, concordance à 1e-13</p>
+  <figure>
+    <img src="Linear_Algebra/fft_accuracy.png" alt="Transformées réécrites à la main contre numpy.fft">
+    <figcaption>Une transformée de Cooley-Tukey radix-2 réécrite, vérifiée contre <code>numpy.fft</code> jusqu'à n=64.</figcaption>
+  </figure>
+  <p>
+    Une FFT, un déterminant par complément de Schur, un inverse matriciel exact
+    en arithmétique entière et une trace qui ne forme jamais le produit. NumPy
+    sert partout d'oracle contre lequel chaque résultat est vérifié, jamais
+    d'implémentation : le déterminant n'appelle pas
+    <code>numpy.linalg.det</code> et les transformées n'appellent pas
+    <code>numpy.fft</code>.
+  </p>
+  <p>
+    Aucun n'est rapide, et chaque notebook trace son propre coût pour que l'écart
+    soit visible plutôt que sous-entendu. L'inverse est exact et non approché :
+    <code>A @ A_inverse</code> est l'identité, pas quelque chose qui s'en
+    approche.
+  </p>
+</section>
+
+<section>
+  <h2><a href="https://github.com/Tewf/after-hours/tree/main/Taxes">L'impôt français, modélisé</a></h2>
+  <p class="result">Le point de bascule est à 59 800 € de brut annuel</p>
+  <figure>
+    <img src="Taxes/point_de_bascule.png" alt="Taux effectif face au barème, avec le point de bascule marqué">
+    <figcaption>Le barème est un escalier ; le taux que l'on paie réellement est la courbe lisse en dessous.</figcaption>
+  </figure>
+  <p>
+    À partir de quand un euro brut supplémentaire cesse-t-il de rapporter
+    beaucoup ? Ajuster le taux effectif comme une approche exponentielle vers une
+    asymptote, puis chercher où sa pente cesse de croître, demande la fonction W
+    de Lambert, car l'équation prend la forme <code>v·e^v = c</code>. Les deux
+    branches sont calculées et l'on retient celle qui tombe dans la plage de
+    revenus. <a href="Taxes/taxes.html">Lire le rapport complet</a>.
+  </p>
+</section>
+
+<footer>
+  Sous licence MIT. Construit le soir et le week-end par
+  <a href="https://github.com/Tewf">Mohamed Hamlil</a>.
+</footer>
+
+</div>
+</body>
+</html>
