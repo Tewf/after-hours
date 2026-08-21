@@ -33,6 +33,10 @@ jobs:
         working-directory: Groebner_Basis_SAT_Solver
         run: python test_bruteforce.py
 
+      - name: Sorting traces, each sort sorts and its trace replays
+        working-directory: Blender_Python_Scripts/sorting_algorithms
+        run: python test_sorting_traces.py
+
       - name: Flappy Bird, the environment still steps
         working-directory: Flappy_Bird_CNN
         env:

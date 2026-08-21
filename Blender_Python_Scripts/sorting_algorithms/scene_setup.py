@@ -23,18 +23,21 @@ from mathutils import Vector
 EEVEE = "BLENDER_EEVEE"  # 'BLENDER_EEVEE_NEXT' was a 4.2 to 4.5 only spelling
 
 
-def parse_args(default_output):
-    """Read the arguments Blender passes after a bare `--`."""
+def parse_args(default_output, add_arguments=None):
+    """Read the arguments Blender passes after a bare `--`.
+
+    Only the scene's own arguments live here. Anything about which algorithm ran,
+    or how fast, belongs to the caller, which passes `add_arguments` to add them.
+    """
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--render", action="store_true",
                         help="render the animation instead of only building it")
     parser.add_argument("--output", default=default_output)
-    parser.add_argument("--elements", type=int, default=None)
-    parser.add_argument("--sort-speed", type=int, default=None)
     parser.add_argument("--resolution", default="1920x1080")
     parser.add_argument("--fps", type=int, default=24)
-    parser.add_argument("--seed", type=int, default=None)
+    if add_arguments is not None:
+        add_arguments(parser)
     return parser.parse_args(argv)
 
 

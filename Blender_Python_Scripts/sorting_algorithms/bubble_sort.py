@@ -1,123 +1,68 @@
-"""Bubble sort as a Blender animation: bars swap, and the pair being compared flashes red.
+"""Bubble sort, as a trace of what it did. No Blender, no geometry, no colour.
 
-Run inside Blender's Scripting workspace, or headless:
+One role: sort a list and say so in events. Import `sort`, or run the file:
 
-    blender --background --python bubble_sort.py -- --render --output out/bubble_sort.mp4
+    python bubble_sort.py --elements 20 --seed 7 --output out/bubble_sort.jsonl
+
+Rendering that trace is `render_trace.py`'s job. Keeping the two apart is what lets
+this run under plain Python in CI, so the animation in the README can be checked
+against a sort that demonstrably sorted, rather than against a video of bars moving.
 """
 
-import os
-import sys
+import argparse
 import random
+import sys
 
-import bpy
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))
-                if "__file__" in globals() else os.getcwd())
-import scene_setup  # noqa: E402
+import event_trace
 
 
-def change_object_color(obj, color=(1, 1, 1, 1)):
-    """Apply a material of the given RGBA colour, creating one if needed."""
-    if not obj.data.materials:
-        mat = bpy.data.materials.new(name="Material")
-        obj.data.materials.append(mat)
+def sort(values, writer):
+    """Bubble sort in place, emitting a compare for every look and a swap for every move.
+
+    `order` tracks which bar currently sits at each position, so the ids in an
+    event name the bars themselves rather than the slots they happen to occupy.
+    """
+    order = ["a%d" % index for index in range(len(values))]
+    for position, value in enumerate(values):
+        writer.emit("create", order[position], index=position, value=value)
+
+    count = len(values)
+    for settled in range(count):
+        for position in range(count - settled - 1):
+            writer.emit("compare", [order[position], order[position + 1]])
+            if values[position] > values[position + 1]:
+                values[position], values[position + 1] = values[position + 1], values[position]
+                order[position], order[position + 1] = order[position + 1], order[position]
+                writer.emit("swap", [order[position], order[position + 1]])
+        writer.emit("mark", order[count - settled - 1], role="sorted")
+    return values
+
+
+def build(elements=20, max_height=5, seed=None):
+    """Generate a run and return its writer, already holding the whole trace."""
+    if seed is not None:
+        random.seed(seed)
+    values = [random.randint(1, max_height) for _ in range(elements)]
+    writer = event_trace.Writer("bubble_sort", "array", seed=seed,
+                                elements=elements, max_height=max_height)
+    sort(values, writer)
+    return writer, values
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Bubble sort, emitting an event trace.")
+    parser.add_argument("--elements", type=int, default=20)
+    parser.add_argument("--max-height", type=int, default=5)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--output", default=None, help="write here instead of stdout")
+    args = parser.parse_args(argv)
+
+    writer, _ = build(args.elements, args.max_height, args.seed)
+    if args.output:
+        writer.write(args.output)
     else:
-        mat = obj.data.materials[0]
-
-    # No use_nodes assignment: it is a no-op since 5.0 and raises in 6.0.
-    bsdf = mat.node_tree.nodes.get("Principled BSDF")
-    if bsdf is None:
-        bsdf = mat.node_tree.nodes.new(type="ShaderNodeBsdfPrincipled")
-
-    bsdf.inputs["Base Color"].default_value = color
-    mat.diffuse_color = color
-    obj.active_material = mat
+        sys.stdout.write(writer.dumps())
 
 
-def get_object_color(obj):
-    """Read back the base colour, so a highlighted bar can be restored."""
-    if obj.active_material:
-        bsdf = obj.active_material.node_tree.nodes.get("Principled BSDF")
-        if bsdf:
-            return tuple(bsdf.inputs["Base Color"].default_value)
-    return None
-
-
-def key_color(bar, frame):
-    bar.active_material.node_tree.nodes["Principled BSDF"].inputs["Base Color"] \
-        .keyframe_insert(data_path="default_value", frame=frame)
-
-
-def create_bars(num_elements=20, bar_width=0.5, max_height=5):
-    data = [random.randint(1, max_height) for _ in range(num_elements)]
-    bars = []
-    for i, value in enumerate(data):
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(i * bar_width * 2, 0, value / 2))
-        bar = bpy.context.object
-        bar.scale.x = bar_width
-        bar.scale.z = value
-        change_object_color(bar, (random.random(), random.random(), random.random(), 1))
-        bars.append(bar)
-    return bars
-
-
-def bubble_sort_animation(bars, sort_speed):
-    global frame_num
-    half_swap = sort_speed // 2  # integer: fractional frames never render
-    n = len(bars)
-    for i in range(n):
-        for j in range(n - i - 1):
-            bar1, bar2 = bars[j], bars[j + 1]
-
-            if bar1.scale.z > bar2.scale.z:
-                bar1.keyframe_insert(data_path="location", frame=frame_num)
-                bar2.keyframe_insert(data_path="location", frame=frame_num)
-
-                original_color1 = get_object_color(bar1)
-                original_color2 = get_object_color(bar2)
-                change_object_color(bar1, original_color1)
-                change_object_color(bar2, original_color2)
-                key_color(bar1, frame_num)
-                key_color(bar2, frame_num)
-
-                frame_num += 1
-                change_object_color(bar1, color=(1, 0, 0, 1))
-                change_object_color(bar2, color=(1, 0, 0, 1))
-                key_color(bar1, frame_num)
-                key_color(bar2, frame_num)
-
-                frame_num += half_swap
-                bar1.location.x, bar2.location.x = bar2.location.x, bar1.location.x
-                bar1.keyframe_insert(data_path="location", frame=frame_num)
-                bar2.keyframe_insert(data_path="location", frame=frame_num)
-
-                change_object_color(bar1, color=original_color1)
-                change_object_color(bar2, color=original_color2)
-                key_color(bar1, frame_num)
-                key_color(bar2, frame_num)
-
-                bars[j], bars[j + 1] = bars[j + 1], bars[j]
-
-            frame_num += half_swap
-
-
-args = scene_setup.parse_args("out/bubble_sort.mp4")
-if args.seed is not None:
-    random.seed(args.seed)
-
-num_elements = args.elements or 20     # Number of elements to sort
-bar_width = 0.5                        # Width of each bar
-max_height = 5                         # Max height for bars
-sort_speed = args.sort_speed or 10     # Frames per swap
-frame_num = 1                          # Start frame for the animation
-
-scene_setup.clear_scene()
-scene_setup.use_linear_keyframes()
-
-bars = create_bars(num_elements, bar_width, max_height)
-for bar in bars:
-    bar.keyframe_insert(data_path="location", frame=frame_num)
-    key_color(bar, frame_num)
-
-bubble_sort_animation(bars, sort_speed)
-scene_setup.finish(bars, frame_num, args, direction=(0.0, -1.0, 0.22))
+if __name__ == "__main__":
+    main()
