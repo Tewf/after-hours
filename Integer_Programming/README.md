@@ -19,10 +19,20 @@ hard still returns confidently, which is exactly why it needs disagreeing with.
 | `vertex_cover` | 3, in **3 nodes** | A five-cycle. Half a vertex each satisfies every edge at a cost of 5/2, and no cover of an odd cycle is that cheap. The gap between 5/2 and 3 is what branching exists to close |
 | `assignment` | 34, in **1 node** | No tree at all. The assignment polytope's corners are already whole, so the relaxation answers and there is nothing to branch on. Here to mark the boundary: this method is not always needed |
 
+![The knapsack tree, built one event at a time](../thumbs/branch_and_bound.webp)
+
 ```sh
 python branch_and_bound.py --problem knapsack --output out/knapsack.jsonl
+python draw_tree.py --problem knapsack --animate ../thumbs/branch_and_bound.webp
 python test_integer_programming.py
 ```
+
+The loop above is not a recording of the program. It is the trace replayed one
+event per frame, so what you watch is the order the search actually did things:
+a node opens, takes its relaxation's bound, and then goes grey when pruned or
+gold when it turns out whole. Layout is computed from the finished tree, so
+nothing shifts as nodes arrive — you are watching a search, not a diagram
+rearranging itself.
 
 ## The dichotomy is Dakin's
 

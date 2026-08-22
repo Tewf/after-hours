@@ -82,11 +82,21 @@ def place(children, root):
     return column
 
 
-def draw(head, events):
+def draw(head, events, step=None):
+    """The tree as it stands after the first `step` events, or complete if None.
+
+    Drawing a prefix is what makes an animation possible, and it is the same
+    function: a frame is not a different picture, it is this one with fewer
+    events read. Layout is computed from the whole trace so that nothing moves
+    as nodes arrive, which is the difference between watching a search and
+    watching a diagram rearrange itself.
+    """
     children, depth, label = tree(events)
-    verdict, bound = outcomes(events)
+    verdict, bound = outcomes(events[:step] if step is not None else events)
     root = next(event["ids"][0] for event in events if event["op"] == "open")
     column = place(children, root)
+    shown = {event["ids"][0] for event in (events[:step] if step is not None else events)
+             if event["op"] == "open"}
 
     width = int((max(column.values()) + 1) * STEP_X + 2 * MARGIN)
     # Down to the last row's bound label and no further. Reserving a whole extra
@@ -102,7 +112,11 @@ def draw(head, events):
              % (html.escape(head["algorithm"]), len(depth), max(depth.values()))]
 
     for name, kids in children.items():
+        if name not in shown:
+            continue
         for child in kids:
+            if child not in shown:
+                continue
             (x0, y0), (x1, y1) = at(name), at(child)
             # `stroke-opacity` rather than an eight-digit hex: #RRGGBBAA is CSS
             # Color 4, which browsers take and standalone SVG renderers need not,
@@ -116,6 +130,8 @@ def draw(head, events):
                              % (x1, (y0 + y1) / 2 - 4, html.escape(label[child])))
 
     for name in depth:
+        if name not in shown:
+            continue
         x, y = at(name)
         fill = COLOURS.get(verdict.get(name, "branch"), COLOURS["branch"])
         parts.append('<circle cx="%.1f" cy="%.1f" r="%d" fill="%s"/>' % (x, y, RADIUS, fill))
@@ -127,11 +143,49 @@ def draw(head, events):
     return "\n".join(parts) + "\n"
 
 
+def animate(head, events, destination, hold=6, fps=8):
+    """The same drawing, one frame per event, encoded as an animated WebP.
+
+    WebP rather than GIF because the repository already ships its other loops
+    that way, and because a GIF would dither a flat palette that has six colours
+    in it. `hold` is how many frames the finished tree stays on screen before it
+    loops, so the last thing seen is the answer rather than an empty root.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+
+    for tool in ("inkscape", "ffmpeg"):
+        if shutil.which(tool) is None:
+            raise SystemExit(f"--animate needs {tool} on PATH")
+
+    with tempfile.TemporaryDirectory() as scratch:
+        room = pathlib.Path(scratch)
+        for step in range(len(events) + 1):
+            (room / f"{step:04d}.svg").write_text(draw(head, events, step))
+            subprocess.run(["inkscape", str(room / f"{step:04d}.svg"),
+                            "-o", str(room / f"{step:04d}.png"), "-w", "900",
+                            "--export-background=white"],
+                           check=True, capture_output=True)
+        last = room / f"{len(events):04d}.png"
+        for extra in range(1, hold + 1):
+            subprocess.run(["cp", str(last), str(room / f"{len(events) + extra:04d}.png")],
+                           check=True)
+        subprocess.run(["ffmpeg", "-y", "-framerate", str(fps), "-i", str(room / "%04d.png"),
+                        "-loop", "0", "-c:v", "libwebp_anim", "-lossless", "1",
+                        str(destination)], check=True, capture_output=True)
+    return destination
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Draw a search trace as an SVG tree.")
     parser.add_argument("--problem", choices=sorted(branch_and_bound.PROBLEMS), default="knapsack")
     parser.add_argument("--trace", default=None, help="draw this file instead of generating a run")
     parser.add_argument("--output", default=None, help="write here instead of stdout")
+    parser.add_argument("--step", type=int, default=None,
+                        help="draw the tree as it stood after this many events")
+    parser.add_argument("--animate", default=None,
+                        help="write an animated WebP, one frame per event, here")
     args = parser.parse_args(argv)
 
     if args.trace:
@@ -144,7 +198,14 @@ def main(argv=None):
     if head["world"] != "search":
         raise SystemExit("this draws the search world, not %r" % head["world"])
 
-    picture = draw(head, events)
+    if args.animate:
+        pathlib.Path(args.animate).parent.mkdir(parents=True, exist_ok=True)
+        animate(head, events, args.animate)
+        print("[draw_tree] %s: %d frames, %d bytes"
+              % (args.animate, len(events) + 1, pathlib.Path(args.animate).stat().st_size))
+        return 0
+
+    picture = draw(head, events, args.step)
     if args.output:
         pathlib.Path(args.output).parent.mkdir(parents=True, exist_ok=True)
         pathlib.Path(args.output).write_text(picture)
