@@ -25,9 +25,14 @@ import event_trace  # noqa: E402
 
 # Outcome to fill, taken from the site's palette so a thumbnail and the page it
 # sits on are the same drawing twice rather than two drawings.
-COLOURS = {"adopt": "#1B7F4B", "bounded": "#9AA0AC", "infeasible": "#D6D8DE",
+# The site's own tokens, by value, since a thumbnail cannot read a stylesheet:
+# --gold, --muted, --sunken, --correction, --ink. The claim above is only true if
+# these stay the site's, so an adopted node is gold in both places and not green
+# in one of them.
+COLOURS = {"adopt": "#9A6B00", "bounded": "#6A6D77", "infeasible": "#EFEFF3",
            "limit": "#B23A1B", "branch": "#101014"}
 STEP_X, STEP_Y, RADIUS, MARGIN = 74, 84, 13, 34
+BOUND_DROP = 22   # where a node's bound sits below it, and the last row's floor
 
 
 def outcomes(events):
@@ -84,7 +89,10 @@ def draw(head, events):
     column = place(children, root)
 
     width = int((max(column.values()) + 1) * STEP_X + 2 * MARGIN)
-    height = int((max(depth.values()) + 1) * STEP_Y + 2 * MARGIN)
+    # Down to the last row's bound label and no further. Reserving a whole extra
+    # STEP_Y below the deepest node left a band of empty picture, which a README
+    # renders at whatever width it likes and so shows at whatever size it likes.
+    height = int(MARGIN + 2 * RADIUS + max(depth.values()) * STEP_Y + BOUND_DROP + MARGIN)
     at = lambda name: (MARGIN + RADIUS + column[name] * STEP_X,
                        MARGIN + RADIUS + depth[name] * STEP_Y)
 
