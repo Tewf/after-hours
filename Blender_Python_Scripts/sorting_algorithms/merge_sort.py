@@ -1,148 +1,95 @@
-"""Merge sort as a Blender animation: halves split apart in 3D, then slide back merged.
+"""Merge sort, as a trace of what it did. No Blender, no geometry, no colour.
 
-Run inside Blender's Scripting workspace, or headless:
+One role: sort a list and say so in events. Import `sort`, or run the file:
 
-    blender --background --python merge_sort.py -- --render --output out/merge_sort.mp4
+    python merge_sort.py --elements 16 --seed 7 --output out/merge_sort.jsonl
+
+Every `move` carries a `depth`, which is the recursion level the element belongs to
+at that moment. A renderer is free to spend that however it likes; the Blender one
+spends it as distance, so how far a bar has travelled is how deep the call that owns
+it. The trace itself says only which call owns it, never where to put it.
 """
 
-import os
-import sys
+import argparse
+import pathlib
 import random
+import sys
 
-import bpy
+# event_trace sits at the repository root, because the sorts and the branch and
+# bound both write it and neither may reach sideways into the other.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))
-                if "__file__" in globals() else os.getcwd())
-import scene_setup  # noqa: E402
-
-
-def change_object_color(obj, color):
-    """Apply a material of the given RGBA colour, creating one if needed."""
-    if not obj.data.materials:
-        mat = bpy.data.materials.new(name="Material")
-        obj.data.materials.append(mat)
-    else:
-        mat = obj.data.materials[0]
-
-    # No use_nodes assignment: it is a no-op since 5.0 and raises in 6.0.
-    principled_bsdf = mat.node_tree.nodes.get("Principled BSDF")
-    if principled_bsdf:
-        principled_bsdf.inputs["Base Color"].default_value = color
-    mat.diffuse_color = color
-    obj.active_material = mat
+import event_trace  # noqa: E402
 
 
-def create_bars(num_elements=16, bar_width=0.5, max_height=20, data=None):
-    if data is None:
-        data = [random.randint(1, max_height) for _ in range(num_elements)]
+def sort(values, writer):
+    """Merge sort in place, emitting the split, the comparisons and each placement."""
+    order = ["a%d" % index for index in range(len(values))]
+    for position, value in enumerate(values):
+        writer.emit("create", order[position], index=position, value=value)
 
-    bars = []
-    for i, value in enumerate(data):
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(i * bar_width * 2, 0, value / 2))
-        bar = bpy.context.object
-        bar.scale.x = bar_width
-        bar.scale.z = value
-        change_object_color(bar, (random.random(), random.random(), random.random(), 1))
-        bars.append(bar)
-
-    return bars
+    _sort_range(values, order, 0, len(values), 0, writer)
+    for name in order:
+        writer.emit("mark", name, role="sorted")
+    return values
 
 
-def move_bars(bars, vector):
-    for bar in bars:
-        bar.location.x += vector[0]
-        bar.location.y += vector[1]
-        bar.location.z += vector[2]
+def _sort_range(values, order, low, high, depth, writer):
+    if high - low <= 1:
+        return
+    middle = (low + high) // 2
+    for position in range(low, high):
+        writer.emit("move", order[position], index=position, depth=depth + 1,
+                    side="left" if position < middle else "right")
+    _sort_range(values, order, low, middle, depth + 1, writer)
+    _sort_range(values, order, middle, high, depth + 1, writer)
+    _merge(values, order, low, middle, high, depth, writer)
 
 
-def update_location(bar, frame):
-    bar.keyframe_insert(data_path="location", frame=frame)
-
-
-def update_location_all(bars, frame):
-    for bar in bars:
-        update_location(bar, frame)
-
-
-def get_coordinates(objects):
-    return [(obj.location.x, obj.location.y, obj.location.z) for obj in objects]
-
-
-def merge_sort_animation(arr, sort_speed):
-    global frame_num
-    if len(arr) > 1:
-        mid = len(arr) // 2
-        coordinates = get_coordinates(arr)
-        left_half, right_half = arr[:mid], arr[mid:]
-
-        update_location_all(arr, frame_num)
-        move_bars(left_half, (-5, 5, 0))
-        move_bars(right_half, (5, 5, 0))
-        update_location_all(left_half, frame_num + sort_speed)
-        update_location_all(right_half, frame_num + sort_speed)
-        frame_num += sort_speed
-
-        merge_sort_animation(left_half, sort_speed)
-        merge_sort_animation(right_half, sort_speed)
-        merge_animation(arr, coordinates, left_half, right_half, sort_speed)
-
-
-def merge_animation(arr, coordinates, left_half, right_half, sort_speed):
-    global frame_num
-    i = j = k = 0
-    merged = []
-    while i < len(left_half) and j < len(right_half):
-        if left_half[i].scale.z < right_half[j].scale.z:
-            update_location(left_half[i], frame_num)
-            left_half[i].location = coordinates[k]
-            update_location(left_half[i], frame_num + sort_speed)
-            merged.append(left_half[i])
-            i += 1
+def _merge(values, order, low, middle, high, depth, writer):
+    """Interleave the two sorted halves back into `low:high`, one placement at a time."""
+    left_values, left_order = values[low:middle], order[low:middle]
+    right_values, right_order = values[middle:high], order[middle:high]
+    left = right = 0
+    for position in range(low, high):
+        if left < len(left_values) and right < len(right_values):
+            writer.emit("compare", [left_order[left], right_order[right]])
+        take_left = right >= len(right_values) or (
+            left < len(left_values) and left_values[left] <= right_values[right])
+        if take_left:
+            values[position], order[position] = left_values[left], left_order[left]
+            left += 1
         else:
-            update_location(right_half[j], frame_num)
-            right_half[j].location = coordinates[k]
-            update_location(right_half[j], frame_num + sort_speed)
-            merged.append(right_half[j])
-            j += 1
-        frame_num += sort_speed
-        k += 1
-
-    while i < len(left_half):
-        update_location(left_half[i], frame_num)
-        left_half[i].location = coordinates[k]
-        merged.append(left_half[i])
-        frame_num += sort_speed
-        update_location(left_half[i], frame_num)
-        i += 1
-        k += 1
-
-    while j < len(right_half):
-        update_location(right_half[j], frame_num)
-        right_half[j].location = coordinates[k]
-        merged.append(right_half[j])
-        frame_num += sort_speed
-        update_location(right_half[j], frame_num)
-        j += 1
-        k += 1
-
-    arr[:] = merged[:]
+            values[position], order[position] = right_values[right], right_order[right]
+            right += 1
+        writer.emit("move", order[position], index=position, depth=depth)
 
 
-args = scene_setup.parse_args("out/merge_sort.mp4")
-if args.seed is not None:
-    random.seed(args.seed)
+def build(elements=16, max_height=5, seed=None):
+    """Generate a run and return its writer, already holding the whole trace."""
+    if seed is not None:
+        random.seed(seed)
+    values = [random.randint(1, max_height) for _ in range(elements)]
+    writer = event_trace.Writer("merge_sort", "array", seed=seed,
+                                elements=elements, max_height=max_height)
+    sort(values, writer)
+    return writer, values
 
-num_elements = args.elements or 16      # Number of elements to sort
-bar_width = 0.5                         # Width of each bar
-max_height = 20                         # Max height for bars
-sort_speed = args.sort_speed or 10      # Frames per split and per merged element
-frame_num = 1                           # Start frame for the animation
 
-scene_setup.clear_scene()
-scene_setup.use_linear_keyframes()
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Merge sort, emitting an event trace.")
+    parser.add_argument("--elements", type=int, default=16)
+    parser.add_argument("--max-height", type=int, default=5)
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--output", default=None, help="write here instead of stdout")
+    args = parser.parse_args(argv)
 
-bars = create_bars(num_elements, bar_width, max_height)
-update_location_all(bars, frame_num)
-frame_num += sort_speed
-merge_sort_animation(bars, sort_speed)
-scene_setup.finish(bars, frame_num, args, direction=(0.0, -1.0, 0.55))
+    writer, _ = build(args.elements, args.max_height, args.seed)
+    if args.output:
+        writer.write(args.output)
+    else:
+        sys.stdout.write(writer.dumps())
+
+
+if __name__ == "__main__":
+    main()
