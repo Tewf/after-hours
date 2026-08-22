@@ -33,6 +33,12 @@ C++/
 # purpose; full-resolution renders and trained weights ship as release assets.
 out/
 checkpoints/
-results/
 *.pt
 *.pth
+
+# Result tables are the exception and are committed. A number typed into a
+# README has to have a file behind it that CI can read back, which is what
+# check_quoted_numbers.py does with these. Logs stay out: they carry absolute
+# paths from whichever machine trained the run.
+**/results/*
+!**/results/*.csv
