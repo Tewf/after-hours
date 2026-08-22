@@ -25,6 +25,10 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install numpy gymnasium pygame opencv-python-headless matplotlib
 
+      # No build and no GPU, so it runs before anything that could fail slowly.
+      - name: The READMEs agree with the result tables
+        run: python check_quoted_numbers.py
+
       - name: Matrix algorithms, 11 checks against numpy
         working-directory: Linear_Algebra
         run: python test_linear_algebra.py
