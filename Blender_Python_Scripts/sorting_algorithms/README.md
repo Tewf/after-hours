@@ -74,7 +74,7 @@ which is what you want in the GUI.
 
 | | |
 |---|---|
-| [`event_trace.py`](event_trace.py) | The format: write, read and check a trace, and why it holds no coordinates |
+| [`event_trace.py`](../../event_trace.py) | The format: write, read and check a trace, and why it holds no coordinates. At the repository root, because [the branch and bound](../../Integer_Programming/) writes it too |
 | [`bubble_sort.py`](bubble_sort.py) | Bubble sort, emitting a trace. No Blender |
 | [`merge_sort.py`](merge_sort.py) | Merge sort, emitting a trace. No Blender |
 | [`bar_scene.py`](bar_scene.py) | A bar as a Blender object: geometry and material |

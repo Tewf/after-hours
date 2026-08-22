@@ -18,8 +18,12 @@ import sys
 
 import bpy
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))
-                if "__file__" in globals() else os.getcwd())
+# Blender runs this by path, so neither directory is on sys.path: this one for
+# the scene modules, the repository root for the format they replay.
+HERE = (os.path.dirname(os.path.abspath(__file__))
+        if "__file__" in globals() else os.getcwd())
+sys.path[:0] = [HERE, os.path.dirname(os.path.dirname(HERE))]
+
 import event_trace     # noqa: E402
 import bar_scene       # noqa: E402
 import scene_setup     # noqa: E402

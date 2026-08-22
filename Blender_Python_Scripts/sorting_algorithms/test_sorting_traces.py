@@ -8,9 +8,12 @@ disagrees with the sorted input, then the animation would show a sort that did n
 happen, which is the failure worth catching before a render costs four minutes.
 """
 
+import pathlib
 import sys
 
-import event_trace
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
+
+import event_trace  # noqa: E402
 import bubble_sort
 import merge_sort
 

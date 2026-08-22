@@ -10,10 +10,15 @@ against a sort that demonstrably sorted, rather than against a video of bars mov
 """
 
 import argparse
+import pathlib
 import random
 import sys
 
-import event_trace
+# event_trace sits at the repository root, because the sorts and the branch and
+# bound both write it and neither may reach sideways into the other.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
+
+import event_trace  # noqa: E402
 
 
 def sort(values, writer):
